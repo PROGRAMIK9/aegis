@@ -30,7 +30,7 @@ def analyze_text_with_llm(text_content: str) -> dict:
 
     Provide your assessment in the following exact JSON format without any markdown or extra text:
     {{
-        "threat_score": <integer from 0 to 100, where 0 is definite phishing, 100 is completely safe>,
+        "threat_score": <integer from 0 to 100, where 100 is highest threat/definite phishing, and 0 is completely safe>,
         "explanation": "<a concise 1-2 sentence explanation of why>"
     }}
 
@@ -59,8 +59,12 @@ def analyze_text_with_llm(text_content: str) -> dict:
                 raw_text = raw_text.split("```")[1].split("```")[0].strip()
                 
             data = json.loads(raw_text)
+            
+            # Invert the score: LLM outputs 100 for high threat, Aegis expects 0 for high threat
+            inverted_score = 100 - data.get("threat_score", 0)
+            
             return {
-                "llm_score": data.get("threat_score", 0),
+                "llm_score": inverted_score,
                 "llm_reason": data.get("explanation", "Analyzed by Groq.")
             }
         except Exception as e:
@@ -86,8 +90,12 @@ def analyze_text_with_llm(text_content: str) -> dict:
                 raw_text = raw_text.split("```")[1].split("```")[0].strip()
             
             data = json.loads(raw_text)
+            
+            # Invert the score: LLM outputs 100 for high threat, Aegis expects 0 for high threat
+            inverted_score = 100 - data.get("threat_score", 0)
+            
             return {
-                "llm_score": data.get("threat_score", 0),
+                "llm_score": inverted_score,
                 "llm_reason": data.get("explanation", "Analyzed by Ollama.")
             }
         except Exception as e:
@@ -185,7 +193,29 @@ def chat_with_llm(messages: list) -> dict:
             res = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=120)
             res.raise_for_status()
             
-            return res.json()["choices"][0]["message"]
+            msg = res.json()["choices"][0]["message"]
+            
+            # Polyfill for tool calls encoded in content strings
+            import re
+            if msg.get("content") and "<function=" in msg["content"]:
+                matches = re.finditer(r'<function=(.*?)>(.*?)</function>', msg["content"], re.DOTALL)
+                if not msg.get("tool_calls"):
+                    msg["tool_calls"] = []
+                for idx, match in enumerate(matches):
+                    func_name = match.group(1)
+                    args = match.group(2)
+                    msg["tool_calls"].append({
+                        "id": f"call_{idx}",
+                        "type": "function",
+                        "function": {
+                            "name": func_name,
+                            "arguments": args
+                        }
+                    })
+                # Strip it from content so the raw text isn't leaked
+                msg["content"] = re.sub(r'<function=.*?>.*?</function>', '', msg["content"], flags=re.DOTALL).strip()
+                
+            return msg
         except Exception as e:
             return {"role": "assistant", "content": f"Groq API error: {str(e)}"}
     else:

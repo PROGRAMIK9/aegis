@@ -35,9 +35,12 @@ def send_chat_message(
     try:
         response_msg = chat_with_llm(messages)
         
+        tools_executed = False
+        
         # Loop for tool calls (up to 3 times to prevent infinite loops)
         for _ in range(3):
             if response_msg.get("tool_calls"):
+                tools_executed = True
                 messages.append(response_msg)
                 
                 for tool_call in response_msg["tool_calls"]:
@@ -96,7 +99,10 @@ def send_chat_message(
                 
         ai_response_text = response_msg.get("content")
         if not ai_response_text:
-            ai_response_text = "Action completed successfully."
+            if tools_executed:
+                ai_response_text = "I have successfully executed the requested actions."
+            else:
+                ai_response_text = "I'm not sure how to respond to that. What would you like to do?"
         
     except Exception as e:
         ai_response_text = f"An error occurred: {str(e)}"

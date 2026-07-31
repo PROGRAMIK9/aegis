@@ -14,7 +14,7 @@ def check_phishing(
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user)
 ):
-    user_id = user.id if user else None
+    user_id = user.id if user else 1
     return score_phishing_service(db, req.url, req.page_text, user_id=user_id, fast_mode=req.fast_mode)
 
 from app.features.phishing.schemas import WhitelistRequest

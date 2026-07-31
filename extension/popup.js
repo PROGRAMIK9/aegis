@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     flagLegitBtn.addEventListener('click', () => sendFlag('whitelist', '/phishing/whitelist', { domain: currentDomain }));
-    flagMaliciousBtn.addEventListener('click', () => sendFlag('malicious', '/companies/flag', { url: currentDomain, flag_type: 'malicious' }));
+    flagMaliciousBtn.addEventListener('click', () => sendFlag('malicious', '/phishing/blocklist', { domain: currentDomain }));
 
     function setLoading(isLoading) {
         scanBtn.disabled = isLoading;
