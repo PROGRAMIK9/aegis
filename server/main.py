@@ -4,7 +4,9 @@ from datetime import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+
+from ai.fusion import score_phishing, score_transaction as ai_score_transaction
 
 app = FastAPI()
 
@@ -15,6 +17,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class PhishingCheckRequest(BaseModel):
+    url: str
+    page_text: Optional[str] = None
+
+class Transaction(BaseModel):
+    amount: float
+    velocity: int
+    hour: int
+    geo_distance: float
+
+class FraudScoreRequest(BaseModel):
+    transaction: Transaction
 
 def get_db():
     conn = sqlite3.connect("events.db", check_same_thread=False)
@@ -47,54 +62,30 @@ def log_event(event_type: str, input_data: dict, score_result: dict):
         """, (
             event_type,
             json.dumps(input_data),
-            score_result["score"],
-            score_result["tier"],
-            json.dumps(score_result["reasons"]),
+            score_result.get("final_score", 0),
+            score_result.get("verdict", "UNKNOWN"),
+            json.dumps(score_result.get("reasons", [])),
             datetime.now().isoformat()
         ))
         conn.commit()
     finally:
         conn.close()
 
-def score_url(url: str, page_text: str) -> dict:
-    return {
-        "score": 75,
-        "verdict": "Likely phishing",
-        "tier": "high",
-        "reasons": ["stub response"]
-    }
-
-def score_transaction(txn: dict) -> dict:
-    return {
-        "score": 85,
-        "verdict": "Likely fraud",
-        "tier": "high",
-        "reasons": ["stub response"]
-    }
-
-class PhishingCheckRequest(BaseModel):
-    url: str
-    page_text: str
-
-class Transaction(BaseModel):
-    amount: float
-    user_avg_amount: float
-    txn_count_last_hour: int
-    geo_mismatch: bool
-
-class FraudScoreRequest(BaseModel):
-    transaction: Transaction
+@app.get("/")
+def home():
+    return {"message": "Hello from ABBS AI Backend!"}
 
 @app.post("/phishing/check")
 def phishing_check(req: PhishingCheckRequest):
     input_data = req.dict()
-    result = score_url(req.url, req.page_text)
+    result = score_phishing(req.url, req.page_text)
     log_event("phishing", input_data, result)
     return result
 
 @app.post("/fraud/score")
 def fraud_score(req: FraudScoreRequest):
     input_data = req.dict()
-    result = score_transaction(req.transaction.dict())
+    txn = req.transaction
+    result = ai_score_transaction(txn.amount, txn.velocity, txn.hour, txn.geo_distance)
     log_event("fraud", input_data, result)
     return result
