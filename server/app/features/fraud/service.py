@@ -3,7 +3,7 @@ from app.features.fraud.fraud_ml import predict_transaction_fraud
 from app.features.fraud.repository import fraud_repo
 from sqlalchemy.orm import Session
 
-def score_transaction_service(db: Session, amount: float, velocity: int, hour: int, geo_distance: float) -> dict:
+def score_transaction_service(db: Session, amount: float, velocity: int, hour: int, geo_distance: float, user_id: int = None) -> dict:
     rule_res = rule_check_transaction(amount, velocity, hour, geo_distance)
     ml_res = predict_transaction_fraud(amount, velocity, hour, geo_distance)
     
@@ -36,5 +36,5 @@ def score_transaction_service(db: Session, amount: float, velocity: int, hour: i
     }
     
     txn_data = {"amount": amount, "velocity": velocity, "hour": hour, "geo_distance": geo_distance}
-    fraud_repo.create(db, txn_data, result)
+    fraud_repo.create(db, txn_data, result, user_id=user_id)
     return result
