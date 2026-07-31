@@ -1,91 +1,55 @@
-import sqlite3
-import json
-from datetime import datetime
+"""
+Aegis — Real-time Phishing & Fraud Detection Platform
+
+FastAPI application entrypoint.
+"""
+
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
 
-from ai.fusion import score_phishing, score_transaction as ai_score_transaction
+from config import get_settings
+from database import init_db, close_db
+from routers import health_router, phishing_router, fraud_router, events_router
 
-app = FastAPI()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup: create tables. Shutdown: dispose engine."""
+    await init_db()
+    yield
+    await close_db()
+
+
+settings = get_settings()
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    description=settings.APP_DESCRIPTION,
+    version=settings.APP_VERSION,
+    lifespan=lifespan,
+)
+
+# ── CORS ─────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-class PhishingCheckRequest(BaseModel):
-    url: str
-    page_text: Optional[str] = None
+# ── Routers ──────────────────────────────────────────────────────────────
+app.include_router(health_router)
+app.include_router(phishing_router)
+app.include_router(fraud_router)
+app.include_router(events_router)
 
-class Transaction(BaseModel):
-    amount: float
-    velocity: int
-    hour: int
-    geo_distance: float
 
-class FraudScoreRequest(BaseModel):
-    transaction: Transaction
-
-def get_db():
-    conn = sqlite3.connect("events.db", check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-@app.on_event("startup")
-def startup_event():
-    conn = get_db()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            type TEXT NOT NULL,
-            input_jsonb TEXT NOT NULL,
-            score REAL NOT NULL,
-            tier TEXT NOT NULL,
-            reasons_jsonb TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-def log_event(event_type: str, input_data: dict, score_result: dict):
-    conn = get_db()
-    try:
-        conn.execute("""
-            INSERT INTO events (type, input_jsonb, score, tier, reasons_jsonb, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            event_type,
-            json.dumps(input_data),
-            score_result.get("final_score", 0),
-            score_result.get("verdict", "UNKNOWN"),
-            json.dumps(score_result.get("reasons", [])),
-            datetime.now().isoformat()
-        ))
-        conn.commit()
-    finally:
-        conn.close()
-
-@app.get("/")
-def home():
-    return {"message": "Hello from ABBS AI Backend!"}
-
-@app.post("/phishing/check")
-def phishing_check(req: PhishingCheckRequest):
-    input_data = req.dict()
-    result = score_phishing(req.url, req.page_text)
-    log_event("phishing", input_data, result)
-    return result
-
-@app.post("/fraud/score")
-def fraud_score(req: FraudScoreRequest):
-    input_data = req.dict()
-    txn = req.transaction
-    result = ai_score_transaction(txn.amount, txn.velocity, txn.hour, txn.geo_distance)
-    log_event("fraud", input_data, result)
-    return result
+@app.get("/", tags=["Root"])
+async def root():
+    return {
+        "app": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "docs": "/docs",
+    }
