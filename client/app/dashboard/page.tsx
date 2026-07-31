@@ -1,14 +1,24 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShieldAlert, CheckCircle, Ban, Trash2, Download } from "lucide-react";
 
 export default function DashboardPage() {
   const [showLogs, setShowLogs] = useState(true);
+  const [events, setEvents] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/api/v1/events?limit=10")
+      .then(res => res.json())
+      .then(data => {
+        if (data.events) setEvents(data.events);
+      })
+      .catch(console.error);
+  }, []);
 
   return (
     <>
-      <header className="flex justify-between items-end mb-10 pl-6 xl:pl-10">
-        <h2 className="font-cormorant text-[64px] leading-[78px] font-bold tracking-tight">Threat Matrix</h2>
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-10 pl-2 lg:pl-6 xl:pl-10">
+        <h2 className="font-cormorant text-[48px] md:text-[64px] leading-[58px] md:leading-[78px] font-bold tracking-tight mb-4 md:mb-0">Threat Matrix</h2>
         <div className="flex items-center gap-4 mb-4">
           {!showLogs ? (
             <button onClick={() => setShowLogs(true)} className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-gradient-to-r from-[#003882] to-[#0048A6] text-white font-inter text-sm font-medium hover:brightness-110 transition-all border border-white/10 shadow-[0_0_12px_rgba(0,30,100,0.4)] cursor-pointer">
@@ -27,9 +37,9 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="flex-1 flex gap-6 xl:gap-8 min-h-0 pl-6 xl:pl-10">
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 xl:gap-8 min-h-0 pl-2 lg:pl-6 xl:pl-10">
         {/* Left Column */}
-        <div className="w-[280px] xl:w-[252px] flex flex-col gap-6">
+        <div className="w-full lg:w-[280px] xl:w-[252px] flex flex-col gap-6">
 
           {/* Pipeline Health */}
           <div className="flex-1 rounded-[9px] p-6 flex flex-col relative overflow-hidden group shadow-xl"
@@ -73,7 +83,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Middle Column - AI Forecast */}
-        <div className="flex-1 max-w-[582px] rounded-[9px] p-8 flex flex-col shadow-xl"
+        <div className="flex-1 w-full lg:max-w-[582px] rounded-[9px] p-4 lg:p-8 flex flex-col shadow-xl"
           style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
           <div className="flex items-center justify-between mb-8">
             <h3 className="font-cormorant font-bold text-[32px] leading-[39px] tracking-tight">AI Forecast</h3>
@@ -89,11 +99,20 @@ export default function DashboardPage() {
 
           <div className="flex flex-col gap-6 overflow-y-auto pr-3 -mr-3 custom-scrollbar">
             {showLogs ? (
-              <>
-                <FeedCard label="Likely Phishing" domain="http://paypa1-login.tk/secure" score={82} tags={["Suspicious TLD", "Impersonates paypal", "LLM: Urgency"]} type="phishing" />
-                <FeedCard label="Transaction anomaly" domain="http://update-secure-auth.com/..." score={95} tags={["Zero-day signature", "Phishing kit detected"]} type="fraud" />
-                <FeedCard label="Clean URL" domain="http://legitimate-bank-login.com/..." score={12} tags={["Verified cert", "Historical trust"]} type="clean" />
-              </>
+              events.length > 0 ? events.map(evt => (
+                <FeedCard 
+                  key={evt.id}
+                  label={evt.type === 'phishing' ? 'URL Scan' : 'Txn Fraud'} 
+                  domain={evt.target} 
+                  score={evt.score} 
+                  tags={evt.reasons || [evt.verdict]} 
+                  type={evt.type} 
+                />
+              )) : (
+                <div className="flex-1 flex items-center justify-center text-white/30 font-inter text-lg">
+                  No events recorded yet.
+                </div>
+              )
             ) : (
               <div className="flex-1 flex items-center justify-center text-white/30 font-inter text-lg">
                 Logs cleared. Click &quot;Restore logs&quot; to view again.
@@ -103,7 +122,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column - AI Insight */}
-        <div className="w-[380px] xl:w-[554px] rounded-[9px] p-8 flex flex-col shadow-xl"
+        <div className="w-full lg:w-[380px] xl:w-[554px] rounded-[9px] p-4 lg:p-8 flex flex-col shadow-xl"
           style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
           <h3 className="font-cormorant font-bold text-[32px] leading-[39px] tracking-tight mb-8">AI Insight</h3>
           <div className="flex-1 flex flex-col gap-6 relative">
