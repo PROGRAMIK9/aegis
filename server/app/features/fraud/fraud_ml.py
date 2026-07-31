@@ -39,21 +39,30 @@ def get_fraud_model():
 
 def predict_transaction_fraud(amount: float, velocity: int, hour: int, geo_distance: float) -> dict:
     """
-    Scores a transaction using Isolation Forest.
+    Scores a transaction using Isolation Forest with calibrated score mapping.
     """
     model = get_fraud_model()
     
     features = [[amount, velocity, hour, geo_distance]]
     
-    # Decision function returns a score (lower = more anomalous)
-    # We want to map this to 0-100 risk score where 100 is high risk.
-    raw_score = model.decision_function(features)[0]
+    # Decision function returns a raw score (positive for inliers, negative for outliers)
+    raw_score = float(model.decision_function(features)[0])
     
-    # Typical raw_score is between -0.5 and 0.5. 
-    # Let's normalize it to 0-100. Lower raw_score -> Higher risk.
-    # Clip and map:
-    normalized = 1.0 - (raw_score - (-0.3)) / (0.3 - (-0.3))
-    risk_score = max(0, min(100, int(normalized * 100)))
+    # Calibrated mapping:
+    # High inlier (raw_score >= 0.08): 0 risk
+    # Mild inlier (0.00 <= raw_score < 0.08): 0 - 15 risk
+    # Mild anomaly (-0.15 <= raw_score < 0.00): 15 - 60 risk
+    # Severe anomaly (raw_score < -0.15): 60 - 100 risk
+    if raw_score >= 0.08:
+        risk_score = 0
+    elif raw_score >= 0.00:
+        risk_score = int((0.08 - raw_score) / 0.08 * 15)
+    elif raw_score >= -0.15:
+        risk_score = int(15 + (-raw_score) / 0.15 * 45)
+    else:
+        risk_score = int(min(100, 60 + (-raw_score - 0.15) / 0.15 * 40))
+
+    risk_score = max(0, min(100, risk_score))
     
     reasons = []
     if amount > 300:
