@@ -3,7 +3,7 @@ from app.features.fraud.models import FraudEvent
 import json
 
 class FraudRepository:
-    def create(self, db: Session, txn: dict, result: dict):
+    def create(self, db: Session, txn: dict, result: dict, user_id: int = None):
         db_event = FraudEvent(
             amount=txn["amount"],
             velocity=txn["velocity"],
@@ -11,7 +11,8 @@ class FraudRepository:
             geo_distance=txn["geo_distance"],
             final_score=result["final_score"],
             verdict=result["verdict"],
-            reasons_jsonb=json.dumps(result["reasons"])
+            reasons_jsonb=json.dumps(result["reasons"]),
+            user_id=user_id
         )
         db.add(db_event)
         db.commit()

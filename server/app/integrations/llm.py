@@ -64,7 +64,7 @@ def analyze_text_with_llm(text_content: str) -> dict:
                 "stream": False,
                 "format": "json"
             }
-            res = requests.post(OLLAMA_URL, json=payload, timeout=30)
+            res = requests.post(OLLAMA_URL, json=payload, timeout=120)
             res.raise_for_status()
             response_json = res.json()
             # Ollama with format="json" tries to guarantee JSON output
