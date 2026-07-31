@@ -49,8 +49,17 @@ export default function Home() {
           </div>
 
           <div className="flex gap-4 w-full">
-            <button onClick={() => window.close()} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-[0_0_20px_rgba(220,38,38,0.3)]">
-              Close Tab
+            <button 
+              onClick={() => {
+                if (window.history.length > 2) {
+                  window.history.go(-2);
+                } else {
+                  window.location.href = "about:blank";
+                }
+              }} 
+              className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-[0_0_20px_rgba(220,38,38,0.3)]"
+            >
+              Go Back Safely
             </button>
             <Link href="/dashboard" className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
               <ArrowLeft size={16} /> Go to Dashboard
