@@ -82,3 +82,35 @@ def analyze_text_with_llm(text_content: str) -> dict:
         except Exception as e:
             print(f"Ollama error: {e}")
             return {"llm_score": 0, "llm_reason": f"Ollama local API error: {str(e)}"}
+
+def chat_with_llm(message: str) -> str:
+    """
+    Generic chat functionality using the configured LLM.
+    """
+    prompt = f"You are Aegis, a helpful cybersecurity AI assistant. Respond to the user's message concisely.\n\nUser: {message}\nAegis:"
+    
+    if LLM_PROVIDER.lower() == "gemini":
+        try:
+            client = genai.Client()
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt
+            )
+            return response.text.strip()
+        except Exception as e:
+            return f"Gemini API error: {str(e)}"
+    else:
+        # Default to Ollama
+        try:
+            payload = {
+                "model": OLLAMA_MODEL,
+                "prompt": prompt,
+                "stream": False
+            }
+            res = requests.post(OLLAMA_URL, json=payload, timeout=120)
+            res.raise_for_status()
+            response_json = res.json()
+            return response_json.get("response", "Sorry, I couldn't generate a response.").strip()
+        except Exception as e:
+            print(f"Ollama error: {e}")
+            return f"Ollama local API error: {str(e)}"
