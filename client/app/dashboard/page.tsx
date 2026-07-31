@@ -39,8 +39,10 @@ export default function DashboardPage() {
     if (filterType !== 'All') {
       url += `&type=${filterType.toLowerCase()}`;
     }
+    const token = localStorage.getItem('access_token');
+    const headers: Record<string, string> = token ? { 'Authorization': `Bearer ${token}` } : {};
     
-    fetch(url)
+    fetch(url, { headers })
       .then(res => res.json())
       .then(data => {
         if (data.events) setEvents(data.events);

@@ -3,32 +3,46 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-export default function LoginPage() {
+export default function SignupPage() {
     const router = useRouter();
+    const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const handleLogin = async () => {
+    const handleSignup = async () => {
         setError("");
         setLoading(true);
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
+            const res = await fetch(`${apiUrl}/api/v1/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ full_name: fullName, email, password }),
+            });
+            const data = await res.json();
+            
+            if (!res.ok) {
+                setError(data.detail || "Failed to register");
+                setLoading(false);
+                return;
+            }
+
+            // Auto-login after register
+            const loginRes = await fetch(`${apiUrl}/api/v1/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
             });
-            const data = await res.json();
+            const loginData = await loginRes.json();
             
-            if (res.ok && data.access_token) {
-                localStorage.setItem('access_token', data.access_token);
+            if (loginRes.ok && loginData.access_token) {
+                localStorage.setItem('access_token', loginData.access_token);
                 localStorage.setItem('isLoggedIn', 'true');
                 router.push('/dashboard');
             } else {
-                setError(data.detail || "Invalid email or password");
-                setLoading(false);
+                router.push('/login');
             }
         } catch (err) {
             setError("Network error. Is the server running?");
@@ -47,15 +61,28 @@ export default function LoginPage() {
             <main className="flex-1 flex items-center justify-center -mt-20">
                 <div className="flex flex-col items-center">
                     <h2 className="font-cormorant text-[48px] leading-[64px] font-bold text-white mb-8 tracking-tight text-center">
-                        Analyze more clearly
+                        Create your account
                     </h2>
 
                     <div className="w-[450px] bg-gradient-to-b from-[#0B1530] to-[#040C1F] rounded-[16px] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/5 backdrop-blur-xl relative z-20">
-                        <form className="flex flex-col gap-6 w-full font-inter" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+                        <form className="flex flex-col gap-5 w-full font-inter" onSubmit={(e) => { e.preventDefault(); handleSignup(); }}>
                             
                             {error && <div className="text-red-400 text-sm font-medium text-center bg-red-500/10 py-2 rounded border border-red-500/20">{error}</div>}
 
-                            <div className="flex flex-col gap-2.5 w-full">
+                            <div className="flex flex-col gap-2 w-full">
+                                <label className="text-white text-[13px] font-medium tracking-wide">Full Name</label>
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent rounded-lg opacity-10 pointer-events-none shadow-inner" />
+                                    <input
+                                        type="text"
+                                        value={fullName}
+                                        onChange={(e) => setFullName(e.target.value)}
+                                        className="w-full h-[50px] bg-[#222222]/80 backdrop-blur-sm rounded-[6px] px-4 text-white border border-black focus:outline-none focus:border-[#0048A6] transition-colors shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] relative z-10 placeholder:text-white/20"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2 w-full">
                                 <label className="text-white text-[13px] font-medium tracking-wide">Email Address</label>
                                 <div className="relative">
                                     <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent rounded-lg opacity-10 pointer-events-none shadow-inner" />
@@ -63,12 +90,12 @@ export default function LoginPage() {
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full h-[52px] bg-[#222222]/80 backdrop-blur-sm rounded-[6px] px-4 text-white border border-black focus:outline-none focus:border-[#0048A6] transition-colors shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] relative z-10 placeholder:text-white/20"
+                                        className="w-full h-[50px] bg-[#222222]/80 backdrop-blur-sm rounded-[6px] px-4 text-white border border-black focus:outline-none focus:border-[#0048A6] transition-colors shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] relative z-10 placeholder:text-white/20"
                                     />
                                 </div>
                             </div>
 
-                            <div className="flex flex-col gap-2.5 w-full mb-4">
+                            <div className="flex flex-col gap-2 w-full mb-2">
                                 <label className="text-white text-[13px] font-medium tracking-wide">Password</label>
                                 <div className="relative">
                                     <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent rounded-lg opacity-10 pointer-events-none shadow-inner" />
@@ -76,18 +103,18 @@ export default function LoginPage() {
                                         type="password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full h-[52px] bg-[#222222]/80 backdrop-blur-sm rounded-[6px] px-4 text-white border border-black focus:outline-none focus:border-[#0048A6] transition-colors shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] relative z-10 placeholder:text-white/20"
+                                        className="w-full h-[50px] bg-[#222222]/80 backdrop-blur-sm rounded-[6px] px-4 text-white border border-black focus:outline-none focus:border-[#0048A6] transition-colors shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] relative z-10 placeholder:text-white/20"
                                     />
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between w-full mt-2">
-                                <Link href="/signup" className="font-inter text-white/80 hover:text-white transition-colors text-[14px] font-medium text-left">
-                                    Create an account
+                            <div className="flex flex-col sm:flex-row items-center justify-between w-full mt-2 gap-4">
+                                <Link href="/login" className="font-inter text-white/80 hover:text-white transition-colors text-[14px] font-medium text-left">
+                                    Already have an account? Sign in
                                 </Link>
 
-                                <button type="submit" disabled={loading} className="px-10 py-3 bg-gradient-to-r from-[#003882] to-[#0048A6] hover:brightness-110 transition-all rounded-[6px] font-inter text-[15px] font-medium text-white shadow-[0_0_15px_rgba(0,30,100,0.6)] border border-white/10 text-center disabled:opacity-50">
-                                    {loading ? 'Signing in...' : 'Sign in'}
+                                <button type="submit" disabled={loading} className="px-8 py-3 bg-gradient-to-r from-[#003882] to-[#0048A6] hover:brightness-110 transition-all rounded-[6px] font-inter text-[15px] font-medium text-white shadow-[0_0_15px_rgba(0,30,100,0.6)] border border-white/10 text-center disabled:opacity-50">
+                                    {loading ? 'Creating...' : 'Create account'}
                                 </button>
                             </div>
 

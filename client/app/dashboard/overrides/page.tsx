@@ -9,10 +9,12 @@ export default function OverridesPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const token = localStorage.getItem('access_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
         Promise.all([
-            fetch("http://localhost:8000/api/v1/events?limit=50").then(r => r.json()),
-            fetch("http://localhost:8000/api/v1/phishing/blocklist").then(r => r.json()),
-            fetch("http://localhost:8000/api/v1/phishing/whitelist").then(r => r.json())
+            fetch("http://localhost:8000/api/v1/events?limit=50", { headers }).then(r => r.json()),
+            fetch("http://localhost:8000/api/v1/phishing/blocklist", { headers }).then(r => r.json()),
+            fetch("http://localhost:8000/api/v1/phishing/whitelist", { headers }).then(r => r.json())
         ])
         .then(([eventsData, blocklistData, whitelistData]) => {
             const blocked = (eventsData.events || []).filter((e: any) => e.tier === "high" || e.tier === "critical");
@@ -92,7 +94,10 @@ export default function OverridesPage() {
                                                       e.stopPropagation();
                                                       fetch(`http://localhost:8000/api/v1/phishing/blocklist`, {
                                                         method: 'DELETE',
-                                                        headers: { 'Content-Type': 'application/json' },
+                                                        headers: { 
+                                                          'Content-Type': 'application/json',
+                                                          ...(localStorage.getItem('access_token') ? { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` } : {})
+                                                        },
                                                         body: JSON.stringify({ domain: event.target })
                                                       }).then(() => {
                                                           alert("Removed from explicit blocklist!");
@@ -110,7 +115,10 @@ export default function OverridesPage() {
                                                     e.stopPropagation();
                                                     fetch(`http://localhost:8000/api/v1/phishing/whitelist`, {
                                                       method: 'POST',
-                                                      headers: { 'Content-Type': 'application/json' },
+                                                      headers: { 
+                                                        'Content-Type': 'application/json',
+                                                        ...(localStorage.getItem('access_token') ? { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` } : {})
+                                                      },
                                                       body: JSON.stringify({ domain: event.target })
                                                     }).then(() => {
                                                         alert("Added to whitelist!");
@@ -156,7 +164,10 @@ export default function OverridesPage() {
                                                   e.stopPropagation();
                                                   fetch(`http://localhost:8000/api/v1/phishing/whitelist`, {
                                                     method: 'DELETE',
-                                                    headers: { 'Content-Type': 'application/json' },
+                                                    headers: { 
+                                                      'Content-Type': 'application/json',
+                                                      ...(localStorage.getItem('access_token') ? { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` } : {})
+                                                    },
                                                     body: JSON.stringify({ domain: item.target })
                                                   }).then(() => {
                                                       alert("Removed from whitelist!");
