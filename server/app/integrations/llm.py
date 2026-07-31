@@ -2,13 +2,14 @@ import os
 import requests
 import json
 from dotenv import load_dotenv
-from google import genai
 
 load_dotenv()
 
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "gpt-oss-120")
 
 def analyze_text_with_llm(text_content: str) -> dict:
     """
@@ -37,23 +38,33 @@ def analyze_text_with_llm(text_content: str) -> dict:
     "{text_content}"
     """
 
-    if LLM_PROVIDER.lower() == "gemini":
+    if LLM_PROVIDER.lower() == "groq":
         try:
-            client = genai.Client() # Uses GEMINI_API_KEY from env
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt,
-                config=genai.types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                )
-            )
-            data = json.loads(response.text)
+            payload = {
+                "model": GROQ_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.1
+            }
+            headers = {
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            res = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=120)
+            res.raise_for_status()
+            
+            raw_text = res.json()["choices"][0]["message"]["content"].strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+            elif raw_text.startswith("```"):
+                raw_text = raw_text.split("```")[1].split("```")[0].strip()
+                
+            data = json.loads(raw_text)
             return {
                 "llm_score": data.get("threat_score", 0),
-                "llm_reason": data.get("explanation", "Analyzed by Gemini.")
+                "llm_reason": data.get("explanation", "Analyzed by Groq.")
             }
         except Exception as e:
-            return {"llm_score": 0, "llm_reason": f"Gemini API error: {str(e)}"}
+            return {"llm_score": 0, "llm_reason": f"Groq API error: {str(e)}"}
 
     else:
         # Default to Ollama
@@ -89,16 +100,25 @@ def chat_with_llm(message: str) -> str:
     """
     prompt = f"You are Aegis, a helpful cybersecurity AI assistant. Respond to the user's message concisely.\n\nUser: {message}\nAegis:"
     
-    if LLM_PROVIDER.lower() == "gemini":
+    if LLM_PROVIDER.lower() == "groq":
         try:
-            client = genai.Client()
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt
-            )
-            return response.text.strip()
+            payload = {
+                "model": GROQ_MODEL,
+                "messages": [
+                    {"role": "system", "content": "You are Aegis, a helpful cybersecurity AI assistant. Respond concisely."},
+                    {"role": "user", "content": message}
+                ],
+                "temperature": 0.7
+            }
+            headers = {
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            res = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=120)
+            res.raise_for_status()
+            return res.json()["choices"][0]["message"]["content"].strip()
         except Exception as e:
-            return f"Gemini API error: {str(e)}"
+            return f"Groq API error: {str(e)}"
     else:
         # Default to Ollama
         try:
