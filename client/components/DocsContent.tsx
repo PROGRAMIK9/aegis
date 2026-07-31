@@ -609,7 +609,7 @@ export default function DocsContent({ isDashboard = false }: { isDashboard?: boo
                     5
                   </span>
                   <p className="text-white/90 font-medium pt-1">
-                    Select the extension directory from your local Aegis repository.
+                    Extract the downloaded Aegis Extension Package, then select its <code className="rounded bg-white/10 px-1.5 py-0.5 text-cyan-200">extension</code> directory.
                   </p>
                 </div>
 
