@@ -25,9 +25,14 @@ def score_phishing(url: str, text_content: str = None) -> dict:
     # Weights: Rules 30%, ML 40%, LLM 30% (if text present)
     # If no text: Rules 40%, ML 60%
     if text_content:
-        final_score = int((rule_res["rule_score"] * 0.3) + (ml_res["ml_score"] * 0.4) + (llm_res["llm_score"] * 0.3))
+        weighted_score = (rule_res["rule_score"] * 0.3) + (ml_res["ml_score"] * 0.4) + (llm_res["llm_score"] * 0.3)
     else:
-        final_score = int((rule_res["rule_score"] * 0.4) + (ml_res["ml_score"] * 0.6))
+        weighted_score = (rule_res["rule_score"] * 0.4) + (ml_res["ml_score"] * 0.6)
+        
+    # In security scoring, strong individual signals shouldn't be diluted by a weighted average.
+    # We take the maximum of any individual component score or the weighted average.
+    max_score = max(rule_res["rule_score"], ml_res["ml_score"], llm_res.get("llm_score", 0))
+    final_score = int(max(weighted_score, max_score))
         
     all_reasons = rule_res["rule_reasons"] + ml_res["ml_reasons"] + llm_res.get("llm_reasons", [])
     
