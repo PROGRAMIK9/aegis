@@ -7,16 +7,16 @@ def score_transaction_service(db: Session, amount: float, velocity: int, hour: i
     rule_res = rule_check_transaction(amount, velocity, hour, geo_distance)
     ml_res = predict_transaction_fraud(amount, velocity, hour, geo_distance)
     
-    final_score = max(rule_res["rule_score"], ml_res["fraud_score"])
+    final_score = min(rule_res["rule_score"], ml_res["fraud_score"])
     all_reasons = list(dict.fromkeys(rule_res["rule_reasons"] + ml_res["fraud_reasons"]))
     
-    if final_score > 80: 
+    if final_score < 20: 
         verdict = "FRAUD"
         tier = "critical"
-    elif final_score > 50: 
+    elif final_score < 50: 
         verdict = "REVIEW_NEEDED"
         tier = "high"
-    elif final_score > 25:
+    elif final_score < 75:
         verdict = "MODERATE_RISK"
         tier = "moderate"
     else: 

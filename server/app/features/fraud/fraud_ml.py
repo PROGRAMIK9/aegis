@@ -62,7 +62,7 @@ def predict_transaction_fraud(amount: float, velocity: int, hour: int, geo_dista
     else:
         risk_score = int(min(100, 60 + (-raw_score - 0.15) / 0.15 * 40))
 
-    risk_score = max(0, min(100, risk_score))
+    risk_score = 100 - max(0, min(100, risk_score))
     
     reasons = []
     if amount > 300:

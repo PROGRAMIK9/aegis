@@ -90,6 +90,6 @@ def predict_phishing_ml(url: str) -> dict:
         reasons.append("Unusually high character entropy in domain (random-looking string)")
         
     return {
-        "ml_score": int(prob * 100),
+        "ml_score": int((1.0 - prob) * 100),
         "ml_reasons": reasons
     }

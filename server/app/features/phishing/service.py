@@ -34,7 +34,7 @@ def score_phishing_service(db: Session, url: str, text_content: str = None, user
         
         if whitelist_entry:
             result = {
-                "final_score": 0,
+                "final_score": 100,
                 "verdict": "SAFE (Reviewed by You)",
                 "tier": "safe",
                 "reasons": ["You added this site to your personal safe list."],
@@ -87,11 +87,13 @@ def score_phishing_service(db: Session, url: str, text_content: str = None, user
     
     # Calculate base score from Rule and ML engines first
     base_weighted = (rule_res["rule_score"] * 0.4) + (ml_res["ml_score"] * 0.6)
-    base_max = max(rule_res["rule_score"], ml_res["ml_score"])
-    base_score = int(max(base_weighted, base_max))
+    base_min = min(rule_res["rule_score"], ml_res["ml_score"])
+    
+    # Use min to heavily penalize if either engine is confident it's phishing
+    base_score = int(min(base_weighted, base_min))
 
     # Early Exit Strategy: Avoid slow LLM if the site is decisively malicious or very safe, OR if fast_mode is True
-    if not fast_mode and text_content and 15 <= base_score <= 60:
+    if not fast_mode and text_content and 40 <= base_score <= 85:
         llm_analysis = analyze_text_with_llm(text_content)
         llm_res["llm_score"] = llm_analysis.get("llm_score", 0)
         if llm_analysis.get("llm_reason"):
@@ -113,18 +115,18 @@ def score_phishing_service(db: Session, url: str, text_content: str = None, user
             is_trusted = True
             break
             
-    if is_trusted and final_score > 50:
+    if is_trusted and final_score < 50:
         final_score = 50
         all_reasons.append("Final score was capped to Moderate Risk because the root domain is highly trusted.")
         
 
-    if final_score > 75: 
+    if final_score < 25: 
         verdict = "CRITICAL_RISK"
         tier = "critical"
-    elif final_score > 50: 
+    elif final_score < 50: 
         verdict = "HIGH_RISK"
         tier = "high"
-    elif final_score > 25:
+    elif final_score < 75:
         verdict = "MODERATE_RISK"
         tier = "moderate"
     else: 

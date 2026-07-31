@@ -656,7 +656,7 @@ export default function ScanLedger() {
                         style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#1C1B19" }}
                         className="text-5xl font-bold"
                       >
-                        {100 - (result.score ?? result.final_score ?? 0)}
+                        {result.score ?? result.final_score ?? 0}
                       </span>
                       <span style={{ color: "#8A8474" }} className="text-lg font-medium">
                         /100
@@ -736,8 +736,8 @@ export default function ScanLedger() {
                     <span className="truncate text-gray-800">{evt.target}</span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="font-bold">{100 - evt.score}/100</span>
-                    <span className={`text-[10px] font-bold ${100 - evt.score < 50 ? 'text-red-600' : 'text-green-700'}`}>
+                    <span className="font-bold">{evt.score}/100</span>
+                    <span className={`text-[10px] font-bold ${evt.score < 50 ? 'text-red-600' : 'text-green-700'}`}>
                       {evt.verdict}
                     </span>
                   </div>
