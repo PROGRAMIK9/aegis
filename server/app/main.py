@@ -5,8 +5,11 @@ from app.api.v1.api import api_router
 from app.core.database import engine, Base
 
 # Import all models so Base.metadata is aware of them for table creation
-import app.features.phishing.models
-import app.features.fraud.models
+from app.features.phishing import models as phishing_models
+from app.features.fraud import models as fraud_models
+from app.features.auth import models as auth_models
+from app.features.chat import models as chat_models
+from app.features.companies import models as companies_models
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

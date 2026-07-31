@@ -11,6 +11,11 @@ class Settings(BaseSettings):
     OLLAMA_URL: str = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
+    # JWT Config
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "super-secret-key-for-development-only")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 1 week
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings()
