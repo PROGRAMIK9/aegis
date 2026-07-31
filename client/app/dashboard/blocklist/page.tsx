@@ -7,7 +7,8 @@ export default function BlocklistPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/events?limit=50")
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        fetch(`${apiUrl}/api/v1/events?limit=50`)
             .then(res => res.json())
             .then(data => {
                 if (data.events) {
@@ -52,12 +53,21 @@ export default function BlocklistPage() {
                                           className="text-xs font-medium px-3 py-1 bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 rounded-full transition-colors flex items-center gap-1"
                                           onClick={(e) => {
                                               e.stopPropagation();
-                                              // Whitelist logic
-                                              fetch(`http://localhost:8000/api/v1/phishing/whitelist`, {
+                                              const token = localStorage.getItem("aegis_token");
+                                              if (!token) return;
+                                              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                                              fetch(`${apiUrl}/api/v1/phishing/whitelist`, {
                                                 method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
+                                                headers: { 
+                                                    'Content-Type': 'application/json',
+                                                    'Authorization': `Bearer ${token}`
+                                                },
                                                 body: JSON.stringify({ domain: event.target })
-                                              }).then(() => alert("Added to whitelist!"));
+                                              }).then(res => {
+                                                  if (res.ok) {
+                                                      setBlockedEvents(prev => prev.filter(b => b.target !== event.target));
+                                                  }
+                                              });
                                           }}
                                         >
                                             <CheckCircle size={12} />

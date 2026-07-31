@@ -7,7 +7,8 @@ export default function DashboardPage() {
   const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/v1/events?limit=10")
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    fetch(`${apiUrl}/api/v1/events?limit=10`)
       .then(res => res.json())
       .then(data => {
         if (data.events) setEvents(data.events);
@@ -37,9 +38,9 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col lg:flex-row gap-6 xl:gap-8 min-h-0 pl-2 lg:pl-6 xl:pl-10">
+      <div className="flex-1 flex flex-col xl:flex-row gap-6 xl:gap-8 min-h-0 pl-2 lg:pl-6 xl:pl-10 overflow-y-auto xl:overflow-visible pb-10 xl:pb-0 pr-4 xl:pr-10 custom-scrollbar">
         {/* Left Column */}
-        <div className="w-full lg:w-[280px] xl:w-[252px] flex flex-col gap-6">
+        <div className="w-full xl:w-[300px] flex flex-col gap-6 flex-shrink-0">
 
           {/* Pipeline Health */}
           <div className="flex-1 rounded-[9px] p-6 flex flex-col relative overflow-hidden group shadow-xl"
@@ -75,15 +76,21 @@ export default function DashboardPage() {
               Blocked Sites
             </h3>
             <div className="flex flex-col gap-2 z-10 w-full">
-              <BlockedSite domain="paypa1-login.tk" reason="Phishing" />
-              <BlockedSite domain="update-secure-auth.com" reason="Malware" />
-              <BlockedSite domain="free-prize-claim.xyz" reason="Scam" />
+              {events
+                .filter(e => e.tier === "high" || e.tier === "critical")
+                .slice(0, 3)
+                .map(event => (
+                  <BlockedSite key={event.id} domain={event.target} reason={event.type.toUpperCase()} />
+              ))}
+              {events.filter(e => e.tier === "high" || e.tier === "critical").length === 0 && (
+                <div className="text-white/40 text-[13px] font-inter italic py-2 text-center">No blocks recently</div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Middle Column - AI Forecast */}
-        <div className="flex-1 w-full lg:max-w-[582px] rounded-[9px] p-4 lg:p-8 flex flex-col shadow-xl"
+        <div className="flex-1 w-full rounded-[9px] p-5 lg:p-8 flex flex-col shadow-xl min-h-[400px] xl:min-h-0"
           style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
           <div className="flex items-center justify-between mb-8">
             <h3 className="font-cormorant font-bold text-[32px] leading-[39px] tracking-tight">AI Forecast</h3>
@@ -122,7 +129,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column - AI Insight */}
-        <div className="w-full lg:w-[380px] xl:w-[554px] rounded-[9px] p-4 lg:p-8 flex flex-col shadow-xl"
+        <div className="w-full xl:w-[450px] rounded-[9px] p-5 lg:p-8 flex flex-col shadow-xl flex-shrink-0"
           style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
           <h3 className="font-cormorant font-bold text-[32px] leading-[39px] tracking-tight mb-8">AI Insight</h3>
           <div className="flex-1 flex flex-col gap-6 relative">
@@ -190,7 +197,7 @@ function FeedCard({ label, domain, score, tags, type }: { label: string, domain:
       <div className="flex justify-between items-start mb-4">
         <h4 className="font-inter font-medium text-[20px] leading-[24px] text-white tracking-tight">{label}</h4>
       </div>
-      <div className="font-mono text-[15px] leading-[21px] tracking-tight text-white mb-6 underline hover:text-[#a5c7fc] transition-colors break-words">{domain}</div>
+      <div className="font-mono text-[14px] leading-[20px] tracking-tight text-white mb-6 underline hover:text-[#a5c7fc] transition-colors break-all opacity-90">{domain}</div>
       <div className="flex flex-wrap gap-2 items-center">
         <div className="flex items-center bg-[#111111]/90 rounded border border-white/5 px-2 py-0.5 shadow-inner mr-2">
           <span className="font-mono text-lg font-bold text-white mr-2">{score}</span>
