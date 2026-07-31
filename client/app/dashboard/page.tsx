@@ -11,6 +11,28 @@ export default function DashboardPage() {
   const criticalEvents = events.filter(e => e.tier === 'critical' || e.tier === 'high');
   const filteredEvents = filterType === 'All' ? events : events.filter(e => e.type.toLowerCase() === filterType.toLowerCase());
 
+  const handleClearLogs = () => {
+    setEvents([]);
+    setShowLogs(false);
+  };
+
+  const handleExportLogs = () => {
+    if (events.length === 0) {
+      alert("No logs to export.");
+      return;
+    }
+    const jsonString = JSON.stringify(events, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `aegis-logs-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     let url = `${apiUrl}/api/v1/events?limit=10`;
@@ -36,12 +58,12 @@ export default function DashboardPage() {
               Restore logs
             </button>
           ) : (
-            <button onClick={() => setShowLogs(false)} className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-gradient-to-b from-[#2a1010]/80 to-[#1a0808]/80 text-red-400 font-inter text-sm font-medium hover:text-red-300 hover:brightness-110 transition-all border border-red-500/20 cursor-pointer">
+            <button onClick={handleClearLogs} className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-gradient-to-b from-[#2a1010]/80 to-[#1a0808]/80 text-red-400 font-inter text-sm font-medium hover:text-red-300 hover:brightness-110 transition-all border border-red-500/20 cursor-pointer">
               <Trash2 className="w-4 h-4" />
               Clear logs
             </button>
           )}
-          <button className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-gradient-to-b from-[#1C1F2B]/80 to-[#12141A]/80 text-white font-inter text-sm font-medium hover:brightness-110 transition-all border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] cursor-pointer">
+          <button onClick={handleExportLogs} className="flex items-center gap-2 px-4 py-2 rounded-[6px] bg-gradient-to-b from-[#1C1F2B]/80 to-[#12141A]/80 text-white font-inter text-sm font-medium hover:brightness-110 transition-all border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] cursor-pointer">
             <Download className="w-4 h-4" />
             Export logs
           </button>
@@ -50,15 +72,15 @@ export default function DashboardPage() {
 
       <div className="flex-1 flex flex-col xl:flex-row gap-6 xl:gap-8 min-h-0 pl-2 lg:pl-6 xl:pl-10 overflow-y-auto xl:overflow-visible pb-10 xl:pb-0 pr-4 xl:pr-10 custom-scrollbar">
         {/* Left Column */}
-        <div className="w-full xl:w-[300px] flex flex-col gap-6 flex-shrink-0">
+        <div className="w-full xl:w-[320px] flex flex-col gap-6 flex-shrink-0">
 
           {/* Pipeline Health */}
           <div className="flex-1 rounded-[9px] p-6 flex flex-col relative overflow-hidden group shadow-xl"
             style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
-            <h3 className="font-medium text-[32px] leading-[39px] tracking-tight relative z-10">Avg Security<br />Score</h3>
-            <div className="mt-auto relative z-10 flex flex-col items-center pb-4">
-              <div className="font-cormorant text-[64px] leading-[84px] font-bold">{averageScore}%</div>
-              <div className="h-[15px] w-full rounded-[9px] bg-gradient-to-r from-[#414141] to-[#1E2022] relative overflow-hidden mt-6 shadow-inner">
+            <h3 className="font-medium text-[24px] leading-[30px] tracking-tight relative z-10">Avg Security<br />Score</h3>
+            <div className="mt-auto relative z-10 flex flex-col items-center pb-2">
+              <div className="font-cormorant text-[42px] leading-[42px] font-bold mt-2">{averageScore}%</div>
+              <div className="h-[12px] w-full rounded-[9px] bg-gradient-to-r from-[#414141] to-[#1E2022] relative overflow-hidden mt-4 shadow-inner">
                 <div className="h-full bg-gradient-to-r from-[#0048A6] to-[#001C40] rounded-[9px] transition-all duration-1000 ease-out relative" style={{ width: `${averageScore}%` }}>
                   <div className="absolute inset-0 bg-white/20 w-1/2 blur-sm skew-x-12 translate-x-full animate-shine" />
                 </div>
@@ -70,7 +92,7 @@ export default function DashboardPage() {
           {/* Module Status */}
           <div className="flex-1 rounded-[9px] p-6 relative overflow-hidden group shadow-xl flex flex-col"
             style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
-            <h3 className="font-medium text-[32px] leading-[39px] tracking-tight relative z-10">Module<br />Status</h3>
+            <h3 className="font-medium text-[24px] leading-[30px] tracking-tight relative z-10">Module<br />Status</h3>
             <div className="mt-auto flex flex-col gap-3 pb-2 z-10 w-full">
               <StatusItem label="Ingestion" status={events.length > 0 ? "ok" : "warning"} />
               <StatusItem label="LLM Analysis" status="ok" />
@@ -81,7 +103,7 @@ export default function DashboardPage() {
           {/* Blocked Sites */}
           <div className="rounded-[9px] p-5 relative overflow-hidden shadow-xl flex flex-col gap-3"
             style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
-            <h3 className="font-medium text-[20px] leading-[24px] tracking-tight relative z-10 flex items-center gap-2">
+            <h3 className="font-medium text-[18px] leading-[22px] tracking-tight relative z-10 flex items-center gap-2">
               <Ban className="w-5 h-5 text-red-400" />
               Blocked Sites
             </h3>
@@ -103,7 +125,7 @@ export default function DashboardPage() {
         <div className="flex-1 w-full rounded-[9px] p-5 lg:p-8 flex flex-col shadow-xl min-h-[400px] xl:min-h-0"
           style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
           <div className="flex items-center justify-between mb-8">
-            <h3 className="font-cormorant font-bold text-[32px] leading-[39px] tracking-tight">AI Forecast</h3>
+            <h3 className="font-cormorant font-bold text-[28px] leading-[34px] tracking-tight">AI Forecast</h3>
             <div className="flex gap-2">
               <div className="relative flex justify-center">
                 <button onClick={() => setFilterType('All')} className={`px-3 transition-colors text-[20px] leading-[24px] relative z-10 ${filterType === 'All' ? 'text-white' : 'text-white/50 hover:text-white'}`}>All</button>
@@ -147,7 +169,7 @@ export default function DashboardPage() {
         {/* Right Column - AI Insight */}
         <div className="w-full xl:w-[450px] rounded-[9px] p-5 lg:p-8 flex flex-col shadow-xl flex-shrink-0"
           style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
-          <h3 className="font-cormorant font-bold text-[32px] leading-[39px] tracking-tight mb-8">AI Insight</h3>
+          <h3 className="font-cormorant font-bold text-[28px] leading-[34px] tracking-tight mb-8">AI Insight</h3>
           <div className="flex-1 flex flex-col gap-6 relative">
             {showLogs ? (
               <div className="font-inter space-y-6 text-white leading-relaxed text-lg xl:text-xl">
@@ -203,9 +225,9 @@ function StatusItem({ label, status }: { label: string, status: "ok" | "warning"
     error: "text-red-400 border-red-500/20 bg-red-500/5",
   };
   return (
-    <div className={`flex items-center justify-between p-3 rounded-[9px] border-[1px] backdrop-blur-sm ${colors[status]} shadow-lg transition-transform hover:scale-[1.02]`}>
-      <span className="font-medium text-white/90 font-inter tracking-wide">{label}</span>
-      <CheckCircle className="w-5 h-5 shadow-inner" />
+    <div className={`flex items-center justify-between p-2.5 rounded-[9px] border-[1px] backdrop-blur-sm ${colors[status]} shadow-lg transition-transform hover:scale-[1.02]`}>
+      <span className="font-medium text-[13px] text-white/90 font-inter tracking-wide">{label}</span>
+      <CheckCircle className="w-4 h-4 shadow-inner" />
     </div>
   );
 }
