@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_db, get_optional_user
 from app.features.auth.models import User
 from app.features.chat.models import ChatMessage
 from app.features.chat.schemas import ChatMessageCreate, ChatMessageOut, ChatHistoryResponse
@@ -13,11 +13,12 @@ router = APIRouter()
 def send_chat_message(
     msg: ChatMessageCreate, 
     db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_optional_user)
 ):
+    user_id = current_user.id if current_user else 1
     # 1. Save user message
     user_msg = ChatMessage(
-        user_id=current_user.id,
+        user_id=user_id,
         role="user",
         content=msg.content
     )
@@ -31,7 +32,7 @@ def send_chat_message(
         pass
         
     ai_msg = ChatMessage(
-        user_id=current_user.id,
+        user_id=user_id,
         role="assistant",
         content=ai_response_text
     )
@@ -44,7 +45,8 @@ def send_chat_message(
 @router.get("/history", response_model=ChatHistoryResponse)
 def get_chat_history(
     db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_optional_user)
 ):
-    messages = db.query(ChatMessage).filter(ChatMessage.user_id == current_user.id).order_by(ChatMessage.created_at.asc()).all()
+    user_id = current_user.id if current_user else 1
+    messages = db.query(ChatMessage).filter(ChatMessage.user_id == user_id).order_by(ChatMessage.created_at.asc()).all()
     return {"messages": messages}

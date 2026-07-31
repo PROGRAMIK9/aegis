@@ -12,8 +12,11 @@ const cormorant = Cormorant_Garamond({
 const firaCode = Fira_Code({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "Aegis",
+  title: "Aegis | Phishing Shield",
   description: "Real-time phishing detector",
+  icons: {
+    icon: "/aegis-logo.png",
+  },
 };
 
 export default function RootLayout({

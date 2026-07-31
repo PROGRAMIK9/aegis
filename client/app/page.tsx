@@ -18,7 +18,7 @@ export default function Home() {
           {!isLoggedIn && (
             <Link href="/login" className="px-6 py-2 rounded-[6px] bg-gradient-to-r from-[#003882] to-[#0048A6] text-white font-medium hover:brightness-110 transition-all shadow-[0_0_12px_rgba(0,30,100,0.4)] border border-white/10">Sign in</Link>
           )}
-          <Link href="#" className="px-6 py-2 rounded-[6px] bg-gradient-to-b from-[#1C1F2B]/80 to-[#12141A]/80 text-white font-medium hover:brightness-110 transition-all border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]">Docs</Link>
+          <Link href="/docs" className="px-6 py-2 rounded-[6px] bg-gradient-to-b from-[#1C1F2B]/80 to-[#12141A]/80 text-white font-medium hover:brightness-110 transition-all border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]">Docs</Link>
           {isLoggedIn && (
             <Link href="/dashboard" className="px-6 py-2 rounded-[6px] bg-gradient-to-r from-[#003882] to-[#0048A6] text-white font-medium hover:brightness-110 transition-all shadow-[0_0_12px_rgba(0,30,100,0.4)] border border-white/10">View dashboard</Link>
           )}
@@ -34,16 +34,15 @@ export default function Home() {
         <p className="font-inter text-[16px] leading-[26px] text-white max-w-[700px] mb-14 drop-shadow-md">
           Aegis fuses deterministic rule engines, isolation forest anomaly detection, and large language models to intercept phishing and fraud before it reaches your users
         </p>
-
         <div className="flex items-center gap-6">
-          <button className="px-10 py-[18px] bg-[#0048A6] hover:bg-[#003882] transition-colors rounded-[8px] font-inter text-[16px] font-medium text-white shadow-[0_0_20px_rgba(0,113,255,0.2)]">
+          <a href="/aegis-extension.zip" download className="px-10 py-[18px] bg-[#0048A6] hover:bg-[#003882] transition-colors rounded-[8px] font-inter text-[16px] font-medium text-white shadow-[0_0_20px_rgba(0,113,255,0.2)]">
             Get Extension!
-          </button>
+          </a>
 
-          <button className="px-10 py-[18px] bg-gradient-to-b from-[#1C1F2B]/90 to-[#12141A]/90 hover:brightness-110 transition-colors rounded-[8px] font-inter text-[16px] font-medium text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_16px_rgba(0,0,0,0.5)] border border-white/5 relative overflow-hidden">
+          <Link href={isLoggedIn ? "/dashboard" : "/login"} className="px-10 py-[18px] bg-gradient-to-b from-[#1C1F2B]/90 to-[#12141A]/90 hover:brightness-110 transition-colors rounded-[8px] font-inter text-[16px] font-medium text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_16px_rgba(0,0,0,0.5)] border border-white/5 relative overflow-hidden text-center">
             <span className="relative z-10">Get Checked!</span>
             <div className="absolute inset-0 bg-white/5 shadow-inner opacity-0 hover:opacity-100 transition-opacity"></div>
-          </button>
+          </Link>
         </div>
       </main>
 
