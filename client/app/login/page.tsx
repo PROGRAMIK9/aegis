@@ -78,17 +78,13 @@ export default function LoginPage() {
 
     return (
         <div className="flex flex-col w-full min-h-screen max-w-[1920px] mx-auto relative z-10 px-8 py-10 fade-in">
-
-            {/* Header */}
             <header className="flex justify-center items-center w-full mb-16 relative bg-gradient-to-r from-transparent via-[#003882]/0 to-[#0048A6]/20 py-4 absolute top-0 left-0 right-0 z-50">
                 <Link href="/">
                     <h1 className="font-cormorant text-[36px] font-bold text-white tracking-widest relative">Aegis</h1>
                 </Link>
             </header>
 
-            {/* Login Card Container */}
             <main className="flex-1 flex items-center justify-center -mt-20">
-
                 <div className="flex flex-col items-center">
                     <h2 className="font-cormorant text-[48px] leading-[64px] font-bold text-white mb-8 tracking-tight text-center">
                         {isRegister ? 'Create your account' : 'Analyze more clearly'}
@@ -192,9 +188,7 @@ export default function LoginPage() {
                         </form>
                     </div>
                 </div>
-
             </main>
-
         </div>
     );
 }

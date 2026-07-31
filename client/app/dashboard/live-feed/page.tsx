@@ -11,7 +11,9 @@ export default function LiveFeedPage() {
         
         const fetchEvents = () => {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            fetch(`${apiUrl}/api/v1/events?limit=50`)
+            const token = localStorage.getItem('access_token');
+            const headers: Record<string, string> = token ? { 'Authorization': `Bearer ${token}` } : {};
+            fetch(`${apiUrl}/api/v1/events?limit=50`, { headers })
                 .then(res => res.json())
                 .then(data => {
                     if (data.events) {
