@@ -30,7 +30,7 @@ def analyze_text_with_llm(text_content: str) -> dict:
 
     Provide your assessment in the following exact JSON format without any markdown or extra text:
     {{
-        "threat_score": <integer from 0 to 100, where 0 is definite phishing, 100 is completely safe>,
+        "threat_score": <integer from 0 to 100, where 100 is highest threat/definite phishing, and 0 is completely safe>,
         "explanation": "<a concise 1-2 sentence explanation of why>"
     }}
 
@@ -59,8 +59,12 @@ def analyze_text_with_llm(text_content: str) -> dict:
                 raw_text = raw_text.split("```")[1].split("```")[0].strip()
                 
             data = json.loads(raw_text)
+            
+            # Invert the score: LLM outputs 100 for high threat, Aegis expects 0 for high threat
+            inverted_score = 100 - data.get("threat_score", 0)
+            
             return {
-                "llm_score": data.get("threat_score", 0),
+                "llm_score": inverted_score,
                 "llm_reason": data.get("explanation", "Analyzed by Groq.")
             }
         except Exception as e:
@@ -86,8 +90,12 @@ def analyze_text_with_llm(text_content: str) -> dict:
                 raw_text = raw_text.split("```")[1].split("```")[0].strip()
             
             data = json.loads(raw_text)
+            
+            # Invert the score: LLM outputs 100 for high threat, Aegis expects 0 for high threat
+            inverted_score = 100 - data.get("threat_score", 0)
+            
             return {
-                "llm_score": data.get("threat_score", 0),
+                "llm_score": inverted_score,
                 "llm_reason": data.get("explanation", "Analyzed by Ollama.")
             }
         except Exception as e:
