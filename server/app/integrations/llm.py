@@ -30,7 +30,7 @@ def analyze_text_with_llm(text_content: str) -> dict:
 
     Provide your assessment in the following exact JSON format without any markdown or extra text:
     {{
-        "threat_score": <integer from 0 to 100, where 100 is definite phishing>,
+        "threat_score": <integer from 0 to 100, where 0 is definite phishing, 100 is completely safe>,
         "explanation": "<a concise 1-2 sentence explanation of why>"
     }}
 

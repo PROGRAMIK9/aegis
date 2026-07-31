@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Cormorant_Garamond, Fira_Code } from "next/font/google";
+import AIChatWidget from "@/components/AIChatWidget";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -35,6 +36,7 @@ export default function RootLayout({
         </div>
 
         {children}
+        <AIChatWidget />
       </body>
     </html>
   );
