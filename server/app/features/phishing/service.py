@@ -96,24 +96,37 @@ def score_phishing_service(db: Session, url: str, text_content: str = None, user
         llm_res["llm_score"] = llm_analysis.get("llm_score", 0)
         if llm_analysis.get("llm_reason"):
              llm_res["llm_reasons"] = [llm_analysis["llm_reason"]]
-             
-        weighted_score = (rule_res["rule_score"] * 0.3) + (ml_res["ml_score"] * 0.4) + (llm_res["llm_score"] * 0.3)
-        max_score = max(base_max, llm_res["llm_score"])
-        final_score = int(max(weighted_score, max_score))
+        # Use a purely weighted score to prevent LLM false positives (e.g., security blogs) from completely overriding the ML
+        final_score = int((rule_res["rule_score"] * 0.3) + (ml_res["ml_score"] * 0.4) + (llm_res["llm_score"] * 0.3))
     else:
         final_score = base_score
         
     raw_reasons = rule_res["rule_reasons"] + ml_res["ml_reasons"] + llm_res.get("llm_reasons", [])
     all_reasons = [r for r in raw_reasons if "Ollama local API error" not in r]
+    
+    TRUSTED_DOMAINS = {"google.com", "github.com", "microsoft.com", "apple.com", "amazon.com", "netflix.com", "facebook.com", "youtube.com"}
+    domain_base = (urlparse(url).hostname or "").lower()
+    
+    is_trusted = False
+    for td in TRUSTED_DOMAINS:
+        if domain_base == td or domain_base.endswith(f".{td}"):
+            is_trusted = True
+            break
+            
+    if is_trusted and final_score > 50:
+        final_score = 50
+        all_reasons.append("Final score was capped to Moderate Risk because the root domain is highly trusted.")
+        
+
     if final_score > 75: 
         verdict = "CRITICAL_RISK"
         tier = "critical"
-    elif final_score > 40: 
+    elif final_score > 50: 
+        verdict = "HIGH_RISK"
+        tier = "high"
+    elif final_score > 25:
         verdict = "MODERATE_RISK"
         tier = "moderate"
-    elif final_score > 25:
-        verdict = "REVIEW_NEEDED"
-        tier = "high"
     else: 
         verdict = "SAFE"
         tier = "safe"

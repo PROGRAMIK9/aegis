@@ -28,8 +28,10 @@ def list_events(
             events.append({
                 "id": f"p_{e.id}",
                 "type": "phishing",
+                "target": e.input_url,
                 "score": e.final_score,
-                "tier": e.verdict,
+                "verdict": e.verdict,
+                "tier": "critical" if "CRITICAL" in (e.verdict or "") else "high" if "HIGH" in (e.verdict or "") or "REVIEW" in (e.verdict or "") else "moderate" if "MODERATE" in (e.verdict or "") else "safe",
                 "created_at": e.created_at
             })
             
@@ -42,8 +44,10 @@ def list_events(
             events.append({
                 "id": f"f_{e.id}",
                 "type": "fraud",
+                "target": f"Txn: ${e.amount}",
                 "score": e.final_score,
-                "tier": e.verdict,
+                "verdict": e.verdict,
+                "tier": "critical" if "FRAUD" in (e.verdict or "") else "high" if "REVIEW" in (e.verdict or "") else "moderate" if "MODERATE" in (e.verdict or "") else "safe",
                 "created_at": e.created_at
             })
             
