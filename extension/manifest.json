@@ -7,9 +7,15 @@
     "default_popup": "popup.html",
     "default_title": "Analyze Current Page"
   },
+  "background": {
+    "service_worker": "background.js"
+  },
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage",
+    "webNavigation",
+    "tabs"
   ],
   "host_permissions": [
     "http://localhost:8000/*"

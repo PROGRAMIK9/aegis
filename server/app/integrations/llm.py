@@ -68,7 +68,13 @@ def analyze_text_with_llm(text_content: str) -> dict:
             res.raise_for_status()
             response_json = res.json()
             # Ollama with format="json" tries to guarantee JSON output
-            data = json.loads(response_json.get("response", "{}"))
+            raw_text = response_json.get("response", "{}").strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+            elif raw_text.startswith("```"):
+                raw_text = raw_text.split("```")[1].split("```")[0].strip()
+            
+            data = json.loads(raw_text)
             return {
                 "llm_score": data.get("threat_score", 0),
                 "llm_reason": data.get("explanation", "Analyzed by Ollama.")

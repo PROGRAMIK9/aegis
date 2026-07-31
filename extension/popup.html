@@ -18,9 +18,31 @@
             <p class="subtitle">AI Threat Intelligence</p>
         </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <div id="url-container" class="url-container">
+        <!-- Login View -->
+        <main class="main-content" id="view-login" style="display: none;">
+            <div class="login-container glass-panel">
+                <h2 style="font-size: 16px; margin-bottom: 12px; text-align: center;">Connect to Aegis</h2>
+                <form id="login-form">
+                    <input type="email" id="login-email" class="native-input" placeholder="Email" required />
+                    <input type="password" id="login-password" class="native-input" placeholder="Password" required />
+                    <button type="submit" class="scan-btn" id="login-btn">
+                        <span class="btn-text">Login</span>
+                        <div class="spinner hidden" id="login-spinner"></div>
+                    </button>
+                    <p id="login-error" class="error-text hidden"></p>
+                </form>
+            </div>
+        </main>
+
+        <!-- Scanner View -->
+        <main class="main-content" id="view-scan" style="display: none;">
+            
+            <div class="glass-panel" style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; border-color: var(--tier-safe-border); background: var(--tier-safe-bg); box-shadow: 0 0 20px rgba(16,185,129,0.1);">
+                <span style="color: var(--tier-safe-text); font-weight: 800; font-size: 14px; letter-spacing: 0.5px;">Active Shield: ON</span>
+                <button id="logout-btn" style="background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Logout</button>
+            </div>
+
+            <div id="url-container" class="url-container glass-panel">
                 <span class="url-label">Current Page</span>
                 <p id="current-url" class="current-url truncate">Loading...</p>
             </div>
@@ -30,6 +52,10 @@
                 <span class="btn-text">Scan for Threats</span>
                 <div class="spinner hidden" id="spinner"></div>
             </button>
+
+            <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 10px; margin-bottom: 10px;">
+                Active Shield scans pages automatically, but you can also trigger a manual scan.
+            </p>
 
             <!-- Results Section (Hidden by default) -->
             <div id="result-container" class="result-container hidden">
@@ -65,6 +91,16 @@
                             <span id="bd-llm" class="bd-score">0</span>
                         </div>
                     </div>
+                </div>
+
+                <!-- Flagging / Review System -->
+                <div class="flag-section">
+                    <p class="flag-title">Community Review</p>
+                    <div class="flag-buttons">
+                        <button id="flag-legit-btn" class="flag-btn flag-legit">Legitimate</button>
+                        <button id="flag-malicious-btn" class="flag-btn flag-malicious">Malicious</button>
+                    </div>
+                    <p id="flag-status" class="flag-status hidden"></p>
                 </div>
             </div>
             

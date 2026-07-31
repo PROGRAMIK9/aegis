@@ -5,6 +5,7 @@ from app.common.schemas import ScoreResult
 class PhishingCheckRequest(BaseModel):
     url: Annotated[str, Field(min_length=1, max_length=2048, description="The URL to analyze for phishing indicators")]
     page_text: Optional[str] = Field(default=None, max_length=50_000, description="Optional page body text")
+    fast_mode: bool = Field(default=False, description="Skip LLM analysis for fast background scanning")
 
     @field_validator("url", mode="before")
     @classmethod
@@ -32,3 +33,6 @@ class PhishingCheckRequest(BaseModel):
 
 class PhishingScoreResponse(ScoreResult):
     pass
+
+class WhitelistRequest(BaseModel):
+    domain: str = Field(min_length=1, max_length=255, description="Domain to whitelist")
