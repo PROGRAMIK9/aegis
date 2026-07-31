@@ -5,16 +5,26 @@ import { ShieldAlert, CheckCircle, Ban, Trash2, Download } from "lucide-react";
 export default function DashboardPage() {
   const [showLogs, setShowLogs] = useState(true);
   const [events, setEvents] = useState<any[]>([]);
+  const [filterType, setFilterType] = useState('All');
+
+  const averageScore = events.length > 0 ? Math.round(events.reduce((acc, evt) => acc + evt.score, 0) / events.length) : 100;
+  const criticalEvents = events.filter(e => e.tier === 'critical' || e.tier === 'high');
+  const filteredEvents = filterType === 'All' ? events : events.filter(e => e.type.toLowerCase() === filterType.toLowerCase());
 
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    fetch(`${apiUrl}/api/v1/events?limit=10`)
+    let url = `${apiUrl}/api/v1/events?limit=10`;
+    if (filterType !== 'All') {
+      url += `&type=${filterType.toLowerCase()}`;
+    }
+    
+    fetch(url)
       .then(res => res.json())
       .then(data => {
         if (data.events) setEvents(data.events);
       })
       .catch(console.error);
-  }, []);
+  }, [filterType]);
 
   return (
     <>
@@ -45,11 +55,11 @@ export default function DashboardPage() {
           {/* Pipeline Health */}
           <div className="flex-1 rounded-[9px] p-6 flex flex-col relative overflow-hidden group shadow-xl"
             style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
-            <h3 className="font-medium text-[32px] leading-[39px] tracking-tight relative z-10">Pipeline<br />Health</h3>
+            <h3 className="font-medium text-[32px] leading-[39px] tracking-tight relative z-10">Avg Security<br />Score</h3>
             <div className="mt-auto relative z-10 flex flex-col items-center pb-4">
-              <div className="font-cormorant text-[64px] leading-[84px] font-bold">76%</div>
+              <div className="font-cormorant text-[64px] leading-[84px] font-bold">{averageScore}%</div>
               <div className="h-[15px] w-full rounded-[9px] bg-gradient-to-r from-[#414141] to-[#1E2022] relative overflow-hidden mt-6 shadow-inner">
-                <div className="h-full bg-gradient-to-r from-[#0048A6] to-[#001C40] rounded-[9px] w-[76%] transition-all duration-1000 ease-out relative">
+                <div className="h-full bg-gradient-to-r from-[#0048A6] to-[#001C40] rounded-[9px] transition-all duration-1000 ease-out relative" style={{ width: `${averageScore}%` }}>
                   <div className="absolute inset-0 bg-white/20 w-1/2 blur-sm skew-x-12 translate-x-full animate-shine" />
                 </div>
               </div>
@@ -62,8 +72,8 @@ export default function DashboardPage() {
             style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
             <h3 className="font-medium text-[32px] leading-[39px] tracking-tight relative z-10">Module<br />Status</h3>
             <div className="mt-auto flex flex-col gap-3 pb-2 z-10 w-full">
-              <StatusItem label="Ingestion" status="ok" />
-              <StatusItem label="LLM Analysis" status="warning" />
+              <StatusItem label="Ingestion" status={events.length > 0 ? "ok" : "warning"} />
+              <StatusItem label="LLM Analysis" status="ok" />
               <StatusItem label="Db Sync" status="ok" />
             </div>
           </div>
@@ -95,18 +105,24 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-8">
             <h3 className="font-cormorant font-bold text-[32px] leading-[39px] tracking-tight">AI Forecast</h3>
             <div className="flex gap-2">
-              <button className="px-3 bg-transparent text-white/50 hover:text-white transition-colors text-[20px] leading-[24px]">All</button>
               <div className="relative flex justify-center">
-                <button className="px-3 text-white text-[20px] leading-[24px] relative z-10">Phishing</button>
-                <div className="absolute bottom-[-10px] w-full h-[2px] bg-white rounded shadow-[0_0_8px_white]"></div>
+                <button onClick={() => setFilterType('All')} className={`px-3 transition-colors text-[20px] leading-[24px] relative z-10 ${filterType === 'All' ? 'text-white' : 'text-white/50 hover:text-white'}`}>All</button>
+                {filterType === 'All' && <div className="absolute bottom-[-10px] w-full h-[2px] bg-white rounded shadow-[0_0_8px_white]"></div>}
               </div>
-              <button className="px-3 bg-transparent text-white/50 hover:text-white transition-colors text-[20px] leading-[24px]">Fraud</button>
+              <div className="relative flex justify-center">
+                <button onClick={() => setFilterType('Phishing')} className={`px-3 transition-colors text-[20px] leading-[24px] relative z-10 ${filterType === 'Phishing' ? 'text-white' : 'text-white/50 hover:text-white'}`}>Phishing</button>
+                {filterType === 'Phishing' && <div className="absolute bottom-[-10px] w-full h-[2px] bg-white rounded shadow-[0_0_8px_white]"></div>}
+              </div>
+              <div className="relative flex justify-center">
+                <button onClick={() => setFilterType('Fraud')} className={`px-3 transition-colors text-[20px] leading-[24px] relative z-10 ${filterType === 'Fraud' ? 'text-white' : 'text-white/50 hover:text-white'}`}>Fraud</button>
+                {filterType === 'Fraud' && <div className="absolute bottom-[-10px] w-full h-[2px] bg-white rounded shadow-[0_0_8px_white]"></div>}
+              </div>
             </div>
           </div>
 
           <div className="flex flex-col gap-6 overflow-y-auto pr-3 -mr-3 custom-scrollbar">
             {showLogs ? (
-              events.length > 0 ? events.map(evt => (
+              filteredEvents.length > 0 ? filteredEvents.map(evt => (
                 <FeedCard 
                   key={evt.id}
                   label={evt.type === 'phishing' ? 'URL Scan' : 'Txn Fraud'} 
@@ -135,14 +151,29 @@ export default function DashboardPage() {
           <div className="flex-1 flex flex-col gap-6 relative">
             {showLogs ? (
               <div className="font-inter space-y-6 text-white leading-relaxed text-lg xl:text-xl">
-                <p>The neural model detects a <strong>14% spike</strong> in credential harvesting domains targeting financial sectors over the last hour.</p>
-                <div className="p-6 rounded-[9px] border border-white/20 bg-[#1E2022]/40 backdrop-blur-md shadow-lg shadow-black/20">
-                  <h4 className="text-white font-medium mb-3 flex items-center gap-2 text-xl">
-                    <ShieldAlert className="w-6 h-6 text-amber-400" />
-                    Recommended Action
-                  </h4>
-                  <p className="text-base text-white/80">Tighten filtering heuristics for `.tk` and `.xyz` TLDs temporarily. Trigger automated blocklist sync with upstream DNS resolvers.</p>
-                </div>
+                {criticalEvents.length > 0 ? (
+                  <>
+                    <p>The neural model has intercepted <strong>{criticalEvents.length} severe threat(s)</strong> recently, including highly suspicious activity originating from <span className="text-red-400 font-mono text-[16px] break-all border border-red-500/20 bg-red-500/10 px-1 rounded">{criticalEvents[0].target}</span>.</p>
+                    <div className="p-6 rounded-[9px] border border-white/20 bg-[#1E2022]/40 backdrop-blur-md shadow-lg shadow-black/20">
+                      <h4 className="text-white font-medium mb-3 flex items-center gap-2 text-xl">
+                        <ShieldAlert className="w-6 h-6 text-amber-400" />
+                        Recommended Action
+                      </h4>
+                      <p className="text-base text-white/80">Avoid interacting with <strong>{criticalEvents[0].target}</strong>. We recommend navigating to your Blocklist to ensure this domain is permanently restricted from your network.</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p>Your network traffic is currently <strong>clean and stable</strong>. No critical threats have been detected in recent sessions.</p>
+                    <div className="p-6 rounded-[9px] border border-white/20 bg-[#1E2022]/40 backdrop-blur-md shadow-lg shadow-black/20">
+                      <h4 className="text-white font-medium mb-3 flex items-center gap-2 text-xl">
+                        <CheckCircle className="w-6 h-6 text-green-400" />
+                        All Clear
+                      </h4>
+                      <p className="text-base text-white/80">Continue normal browsing. The AI shield remains active in the background to automatically intercept anomalies.</p>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center text-white/30 font-inter text-lg">
@@ -152,10 +183,10 @@ export default function DashboardPage() {
             <div className="mt-auto bg-[#001C40]/50 p-6 rounded-[9px] border border-[#0048A6]/30">
               <div className="flex justify-between items-center mb-2">
                 <span className="font-mono text-sm text-white/60">System Integrity</span>
-                <span className="font-mono text-xl text-green-400 font-bold">99.9%</span>
+                <span className="font-mono text-xl text-green-400 font-bold">{Math.max(0, 100 - (criticalEvents.length * 2))}%</span>
               </div>
               <div className="h-1.5 w-full bg-[#1E2022] rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 w-[99.9%] rounded-full shadow-[0_0_10px_#22c55e]" />
+                <div className="h-full bg-green-500 rounded-full shadow-[0_0_10px_#22c55e] transition-all duration-1000" style={{ width: `${Math.max(0, 100 - (criticalEvents.length * 2))}%` }} />
               </div>
             </div>
           </div>
