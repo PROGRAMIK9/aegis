@@ -22,8 +22,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
                 const data = await response.json();
                 
                 // If threat is High or Critical, intercept and redirect
-                if (data.tier === "High" || data.tier === "Critical") {
-                    const blockUrl = `http://localhost:3000/?blocked=true&url=${encodeURIComponent(changeInfo.url)}&score=${data.score}&tier=${data.tier}`;
+                if (data.tier === "high" || data.tier === "critical") {
+                    const blockUrl = `http://localhost:3000/?blocked=true&url=${encodeURIComponent(changeInfo.url)}&score=${data.final_score}&tier=${data.tier}`;
                     chrome.tabs.update(tabId, { url: blockUrl });
                 }
                 

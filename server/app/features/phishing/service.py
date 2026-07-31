@@ -25,34 +25,35 @@ def score_phishing_service(db: Session, url: str, text_content: str = None, user
                 "breakdown": {"rule_score": 0, "ml_score": 0, "llm_score": 0}
             }
             
-    # Check Cache
-    cached_event = db.query(PhishingEvent).filter(
-        PhishingEvent.input_url == url,
-        PhishingEvent.created_at >= datetime.utcnow() - timedelta(hours=12)
-    ).order_by(PhishingEvent.created_at.desc()).first()
+    # Check Cache only for fast background scans
+    if fast_mode:
+        cached_event = db.query(PhishingEvent).filter(
+            PhishingEvent.input_url == url,
+            PhishingEvent.created_at >= datetime.utcnow() - timedelta(hours=12)
+        ).order_by(PhishingEvent.created_at.desc()).first()
     
-    if cached_event:
-        reasons = []
-        if cached_event.reasons_jsonb:
-            try:
-                reasons = json.loads(cached_event.reasons_jsonb)
-            except:
-                pass
-        
-        # Determine tier from verdict if possible, otherwise safe
-        tier = "safe"
-        v = cached_event.verdict.lower()
-        if "critical" in v: tier = "critical"
-        elif "high" in v or "review" in v: tier = "high"
-        elif "moderate" in v: tier = "moderate"
-        
-        return {
-            "final_score": cached_event.final_score,
-            "verdict": cached_event.verdict + " (Cached)",
-            "tier": tier,
-            "reasons": reasons,
-            "breakdown": {"rule_score": 0, "ml_score": 0, "llm_score": 0}
-        }
+        if cached_event:
+            reasons = []
+            if cached_event.reasons_jsonb:
+                try:
+                    reasons = json.loads(cached_event.reasons_jsonb)
+                except:
+                    pass
+            
+            # Determine tier from verdict if possible, otherwise safe
+            tier = "safe"
+            v = cached_event.verdict.lower()
+            if "critical" in v: tier = "critical"
+            elif "high" in v or "review" in v: tier = "high"
+            elif "moderate" in v: tier = "moderate"
+            
+            return {
+                "final_score": cached_event.final_score,
+                "verdict": cached_event.verdict + " (Cached)",
+                "tier": tier,
+                "reasons": reasons,
+                "breakdown": {"rule_score": 0, "ml_score": 0, "llm_score": 0}
+            }
         
     rule_res = rule_check_phishing(url)
     ml_res = predict_phishing_ml(url)
