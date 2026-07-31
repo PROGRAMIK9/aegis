@@ -1,5 +1,5 @@
 import json
-from ai.fusion import score_phishing, score_transaction
+from app.ai.fusion import score_phishing, score_transaction
 
 def run_tests():
     print("Testing Phishing Engine...")
