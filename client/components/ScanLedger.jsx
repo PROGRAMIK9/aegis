@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CheckCircle2, AlertTriangle, XCircle, ScanLine, Link2, CreditCard, RefreshCw, Activity } from "lucide-react";
+import {
+  CheckCircle2,
+  AlertTriangle,
+  ScanLine,
+  Link2,
+  CreditCard,
+  RefreshCw,
+  Activity,
+} from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -35,16 +43,33 @@ function Stamp({ verdict, tier }) {
 }
 
 function SignalRow({ reason, index }) {
-  const isLlm = typeof reason === "string" && (reason.toLowerCase().includes("llm") || reason.toLowerCase().includes("urgency") || reason.toLowerCase().includes("sensitive"));
+  const isLlm =
+    typeof reason === "string" &&
+    (reason.toLowerCase().includes("llm") ||
+      reason.toLowerCase().includes("urgency") ||
+      reason.toLowerCase().includes("sensitive"));
   const Icon = isLlm ? AlertTriangle : CheckCircle2;
 
   return (
-    <div className="flex items-start gap-3 py-3" style={{ borderTop: "1px solid #DAD6CC" }}>
-      <Icon size={18} style={{ color: isLlm ? "#B8791A" : "#A63232", marginTop: 2, flexShrink: 0 }} />
+    <div
+      className="flex items-start gap-3 py-3"
+      style={{ borderTop: "1px solid #DAD6CC" }}
+    >
+      <Icon
+        size={18}
+        style={{
+          color: isLlm ? "#B8791A" : "#A63232",
+          marginTop: 2,
+          flexShrink: 0,
+        }}
+      />
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline justify-between gap-2 flex-wrap">
           <span
-            style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#1C1B19" }}
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              color: "#1C1B19",
+            }}
             className="text-sm font-semibold"
           >
             Signal #{index + 1}
@@ -60,7 +85,10 @@ function SignalRow({ reason, index }) {
             {isLlm ? "Reasoned (LLM)" : "Rule & ML Signal"}
           </span>
         </div>
-        <p style={{ color: "#4A463D", fontFamily: "'Source Serif 4', serif" }} className="text-sm mt-0.5">
+        <p
+          style={{ color: "#4A463D", fontFamily: "'Source Serif 4', serif" }}
+          className="text-sm mt-0.5"
+        >
           {typeof reason === "string" ? reason : JSON.stringify(reason)}
         </p>
       </div>
@@ -70,9 +98,13 @@ function SignalRow({ reason, index }) {
 
 export default function ScanLedger() {
   const [mode, setMode] = useState("phishing");
-  const [phishingUrl, setPhishingUrl] = useState("paypa1-secure-verify.xyz/login");
-  const [pageText, setPageText] = useState("Urgent: Your account is suspended. Verify credentials immediately.");
-  
+  const [phishingUrl, setPhishingUrl] = useState(
+    "paypa1-secure-verify.xyz/login",
+  );
+  const [pageText, setPageText] = useState(
+    "Urgent: Your account is suspended. Verify credentials immediately.",
+  );
+
   // Fraud form state
   const [fraudForm, setFraudForm] = useState({
     amount: 1250.0,
@@ -84,7 +116,7 @@ export default function ScanLedger() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [result, setResult] = useState(null);
-  
+
   // Live audit log state
   const [events, setEvents] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(false);
@@ -92,7 +124,7 @@ export default function ScanLedger() {
   const fetchEvents = async () => {
     setEventsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/events?limit=10`);
+      const res = await fetch(`${API_BASE}/api/v1/events?limit=10`);
       if (res.ok) {
         const data = await res.json();
         setEvents(data.events || []);
@@ -119,14 +151,14 @@ export default function ScanLedger() {
       let payload = {};
 
       if (mode === "phishing") {
-        endpoint = `${API_BASE}/phishing/check`;
+        endpoint = `${API_BASE}/api/v1/phishing/check`;
         let targetUrl = phishingUrl.trim();
         if (targetUrl && !targetUrl.match(/^https?:\/\//i)) {
           targetUrl = `https://${targetUrl}`;
         }
         payload = { url: targetUrl, page_text: pageText.trim() || undefined };
       } else {
-        endpoint = `${API_BASE}/fraud/score`;
+        endpoint = `${API_BASE}/api/v1/fraud/score`;
         payload = {
           transaction: {
             amount: Number(fraudForm.amount),
@@ -145,13 +177,20 @@ export default function ScanLedger() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.detail?.[0]?.msg || errData.detail || `Scan failed (${res.status})`);
+        throw new Error(
+          errData.detail?.[0]?.msg ||
+            errData.detail ||
+            `Scan failed (${res.status})`,
+        );
       }
 
       const data = await res.json();
       setResult({
         ...data,
-        targetInput: mode === "phishing" ? payload.url : `$${fraudForm.amount} txn (${fraudForm.velocity} tx/hr)`,
+        targetInput:
+          mode === "phishing"
+            ? payload.url
+            : `$${fraudForm.amount} txn (${fraudForm.velocity} tx/hr)`,
       });
       fetchEvents();
     } catch (err) {
@@ -164,7 +203,11 @@ export default function ScanLedger() {
 
   return (
     <div
-      style={{ background: "#F7F5F1", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}
+      style={{
+        background: "#F7F5F1",
+        minHeight: "100vh",
+        fontFamily: "'Inter', sans-serif",
+      }}
       className="w-full p-6 md:p-10 text-black"
     >
       <style>{`
@@ -172,13 +215,16 @@ export default function ScanLedger() {
       `}</style>
 
       <div className="max-w-3xl mx-auto space-y-8">
-        
         {/* Header */}
         <div>
           <div className="flex items-center gap-2 mb-1">
             <ScanLine size={16} style={{ color: "#8A8474" }} />
             <span
-              style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#8A8474", letterSpacing: "0.16em" }}
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                color: "#8A8474",
+                letterSpacing: "0.16em",
+              }}
               className="text-xs font-semibold uppercase"
             >
               AEGIS REAL-TIME THREAT DETECTOR
@@ -196,11 +242,18 @@ export default function ScanLedger() {
         <div className="flex gap-2">
           {[
             { key: "phishing", label: "URL / Email Scan", icon: Link2 },
-            { key: "fraud", label: "Transaction Fraud Score", icon: CreditCard },
+            {
+              key: "fraud",
+              label: "Transaction Fraud Score",
+              icon: CreditCard,
+            },
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}
-              onClick={() => { setMode(key); setErrorMsg(""); }}
+              onClick={() => {
+                setMode(key);
+                setErrorMsg("");
+              }}
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
                 background: mode === key ? "#1C1B19" : "transparent",
@@ -216,11 +269,17 @@ export default function ScanLedger() {
         </div>
 
         {/* Form Controls */}
-        <div style={{ background: "#FFFFFF", border: "1px solid #DAD6CC" }} className="p-6 rounded-sm space-y-4">
+        <div
+          style={{ background: "#FFFFFF", border: "1px solid #DAD6CC" }}
+          className="p-6 rounded-sm space-y-4"
+        >
           {mode === "phishing" ? (
             <>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                <label
+                  className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1"
+                  style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                >
                   Target URL
                 </label>
                 <input
@@ -233,7 +292,10 @@ export default function ScanLedger() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                <label
+                  className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1"
+                  style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                >
                   Page Body Text (Optional LLM Analysis)
                 </label>
                 <textarea
@@ -249,31 +311,44 @@ export default function ScanLedger() {
           ) : (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                <label
+                  className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1"
+                  style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                >
                   Amount ($)
                 </label>
                 <input
                   type="number"
                   value={fraudForm.amount}
-                  onChange={(e) => setFraudForm({ ...fraudForm, amount: e.target.value })}
+                  onChange={(e) =>
+                    setFraudForm({ ...fraudForm, amount: e.target.value })
+                  }
                   style={{ border: "1.5px solid #DAD6CC" }}
                   className="w-full px-3 py-2 text-sm rounded-sm outline-none focus:border-black"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                <label
+                  className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1"
+                  style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                >
                   Velocity (txns/hr)
                 </label>
                 <input
                   type="number"
                   value={fraudForm.velocity}
-                  onChange={(e) => setFraudForm({ ...fraudForm, velocity: e.target.value })}
+                  onChange={(e) =>
+                    setFraudForm({ ...fraudForm, velocity: e.target.value })
+                  }
                   style={{ border: "1.5px solid #DAD6CC" }}
                   className="w-full px-3 py-2 text-sm rounded-sm outline-none focus:border-black"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                <label
+                  className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1"
+                  style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                >
                   Hour of Day (0-23)
                 </label>
                 <input
@@ -281,19 +356,26 @@ export default function ScanLedger() {
                   min="0"
                   max="23"
                   value={fraudForm.hour}
-                  onChange={(e) => setFraudForm({ ...fraudForm, hour: e.target.value })}
+                  onChange={(e) =>
+                    setFraudForm({ ...fraudForm, hour: e.target.value })
+                  }
                   style={{ border: "1.5px solid #DAD6CC" }}
                   className="w-full px-3 py-2 text-sm rounded-sm outline-none focus:border-black"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                <label
+                  className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1"
+                  style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                >
                   Geo Distance (km)
                 </label>
                 <input
                   type="number"
                   value={fraudForm.geo_distance}
-                  onChange={(e) => setFraudForm({ ...fraudForm, geo_distance: e.target.value })}
+                  onChange={(e) =>
+                    setFraudForm({ ...fraudForm, geo_distance: e.target.value })
+                  }
                   style={{ border: "1.5px solid #DAD6CC" }}
                   className="w-full px-3 py-2 text-sm rounded-sm outline-none focus:border-black"
                 />
@@ -304,7 +386,11 @@ export default function ScanLedger() {
           <button
             onClick={runScan}
             disabled={loading}
-            style={{ fontFamily: "'IBM Plex Mono', monospace", background: "#1C1B19", color: "#F7F5F1" }}
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              background: "#1C1B19",
+              color: "#F7F5F1",
+            }}
             className="w-full py-3 text-xs font-bold uppercase rounded-sm tracking-wide hover:opacity-90 disabled:opacity-50 cursor-pointer"
           >
             {loading ? "Analyzing Threat Signals…" : "Run Real-Time Check"}
@@ -326,19 +412,28 @@ export default function ScanLedger() {
             <div className="flex items-start justify-between gap-4 mb-3">
               <div className="min-w-0">
                 <div
-                  style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#8A8474" }}
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    color: "#8A8474",
+                  }}
                   className="text-[11px] uppercase tracking-wide mb-1 truncate"
                 >
                   {result.targetInput}
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span
-                    style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#1C1B19" }}
+                    style={{
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      color: "#1C1B19",
+                    }}
                     className="text-5xl font-bold"
                   >
-                    {result.score ?? result.final_score ?? 0}
+                    {100 - (result.score ?? result.final_score ?? 0)}
                   </span>
-                  <span style={{ color: "#8A8474" }} className="text-lg font-medium">
+                  <span
+                    style={{ color: "#8A8474" }}
+                    className="text-lg font-medium"
+                  >
                     /100
                   </span>
                 </div>
@@ -354,15 +449,21 @@ export default function ScanLedger() {
               >
                 <div>
                   <div className="text-gray-500 text-[10px]">RULE SCORE</div>
-                  <div className="font-bold text-sm">{result.breakdown.rule_score}</div>
+                  <div className="font-bold text-sm">
+                    {result.breakdown.rule_score}
+                  </div>
                 </div>
                 <div>
                   <div className="text-gray-500 text-[10px]">ML SCORE</div>
-                  <div className="font-bold text-sm">{result.breakdown.ml_score}</div>
+                  <div className="font-bold text-sm">
+                    {result.breakdown.ml_score}
+                  </div>
                 </div>
                 <div>
                   <div className="text-gray-500 text-[10px]">LLM SCORE</div>
-                  <div className="font-bold text-sm">{result.breakdown.llm_score ?? 0}</div>
+                  <div className="font-bold text-sm">
+                    {result.breakdown.llm_score ?? 0}
+                  </div>
                 </div>
               </div>
             )}
@@ -373,20 +474,30 @@ export default function ScanLedger() {
                 Detected Threat Signals ({result.reasons?.length || 0})
               </div>
               {result.reasons && result.reasons.length > 0 ? (
-                result.reasons.map((reason, i) => <SignalRow key={i} index={i} reason={reason} />)
+                result.reasons.map((reason, i) => (
+                  <SignalRow key={i} index={i} reason={reason} />
+                ))
               ) : (
-                <div className="py-4 text-xs text-gray-500 italic font-mono">No threat signals triggered — request evaluated as safe.</div>
+                <div className="py-4 text-xs text-gray-500 italic font-mono">
+                  No threat signals triggered — request evaluated as safe.
+                </div>
               )}
             </div>
           </div>
         )}
 
         {/* Live Audit Log Feed */}
-        <div style={{ background: "#FFFFFF", border: "1px solid #DAD6CC" }} className="p-6 rounded-sm">
+        <div
+          style={{ background: "#FFFFFF", border: "1px solid #DAD6CC" }}
+          className="p-6 rounded-sm"
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Activity size={16} className="text-gray-600" />
-              <h2 style={{ fontFamily: "'IBM Plex Mono', monospace" }} className="text-sm font-bold uppercase tracking-wider">
+              <h2
+                style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                className="text-sm font-bold uppercase tracking-wider"
+              >
                 Live Audit Trail Feed
               </h2>
             </div>
@@ -395,7 +506,11 @@ export default function ScanLedger() {
               disabled={eventsLoading}
               className="text-xs font-mono text-gray-500 hover:text-black flex items-center gap-1 cursor-pointer"
             >
-              <RefreshCw size={12} className={eventsLoading ? "animate-spin" : ""} /> Refresh
+              <RefreshCw
+                size={12}
+                className={eventsLoading ? "animate-spin" : ""}
+              />{" "}
+              Refresh
             </button>
           </div>
 
@@ -408,25 +523,30 @@ export default function ScanLedger() {
                   className="py-2 flex items-center justify-between gap-4"
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${evt.type === 'phishing' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${evt.type === "phishing" ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"}`}
+                    >
                       {evt.type}
                     </span>
                     <span className="truncate text-gray-800">{evt.target}</span>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="font-bold">{evt.score}/100</span>
-                    <span className={`text-[10px] font-bold ${evt.score > 50 ? 'text-red-600' : 'text-green-700'}`}>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="font-bold">{100 - evt.score}/100</span>
+                    <span
+                      className={`text-[10px] font-bold ${100 - evt.score < 50 ? "text-red-600" : "text-green-700"}`}
+                    >
                       {evt.verdict}
                     </span>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="py-4 text-center text-gray-400 italic">No events recorded yet in audit trail.</div>
+              <div className="py-4 text-center text-gray-400 italic">
+                No events recorded yet in audit trail.
+              </div>
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

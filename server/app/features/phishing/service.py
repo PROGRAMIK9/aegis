@@ -3,11 +3,32 @@ from app.features.phishing.phishing_ml import predict_phishing_ml
 from app.integrations.llm import analyze_text_with_llm
 from app.features.phishing.repository import phishing_repo
 from sqlalchemy.orm import Session
+import requests
+import re
+
+def strip_tags(html: str) -> str:
+    text = re.sub(r'<[^>]+>', ' ', html)
+    return ' '.join(text.split())
+
+def fetch_page_content(url: str) -> str:
+    try:
+        headers = {"User-Agent": "Mozilla/5.0"}
+        res = requests.get(url, headers=headers, timeout=5)
+        res.raise_for_status()
+        return strip_tags(res.text)[:3000]
+    except Exception as e:
+        print(f"Failed to fetch {url}: {e}")
+        return ""
 
 def score_phishing_service(db: Session, url: str, text_content: str = None) -> dict:
     rule_res = rule_check_phishing(url)
     ml_res = predict_phishing_ml(url)
     
+    if not text_content:
+        fetched = fetch_page_content(url)
+        if fetched:
+            text_content = fetched
+
     llm_res = {"llm_score": 0, "llm_reasons": []}
     if text_content:
         llm_analysis = analyze_text_with_llm(text_content)
