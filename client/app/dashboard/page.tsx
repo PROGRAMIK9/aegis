@@ -50,7 +50,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-10 pl-2 lg:pl-6 xl:pl-10">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-10">
         <h2 className="font-cormorant text-[48px] md:text-[64px] leading-[58px] md:leading-[78px] font-bold tracking-tight mb-4 md:mb-0">Threat Matrix</h2>
         <div className="flex items-center gap-4 mb-4">
           {!showLogs ? (
@@ -70,7 +70,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col xl:flex-row gap-6 xl:gap-8 min-h-0 pl-2 lg:pl-6 xl:pl-10 overflow-y-auto xl:overflow-visible pb-10 xl:pb-0 pr-4 xl:pr-10 custom-scrollbar">
+      <div className="flex-1 flex flex-col xl:flex-row gap-6 xl:gap-8 min-h-0 overflow-y-auto xl:overflow-visible pb-10 xl:pb-0 custom-scrollbar">
         {/* Left Column */}
         <div className="w-full xl:w-[320px] flex flex-col gap-6 flex-shrink-0">
 
@@ -78,8 +78,8 @@ export default function DashboardPage() {
           <div className="flex-1 rounded-[9px] p-6 flex flex-col relative overflow-hidden group shadow-xl"
             style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
             <h3 className="font-medium text-[24px] leading-[30px] tracking-tight relative z-10">Avg Security<br />Score</h3>
-            <div className="mt-auto relative z-10 flex flex-col items-center pb-2">
-              <div className="font-cormorant text-[42px] leading-[42px] font-bold mt-2">{averageScore}%</div>
+            <div className="my-auto relative z-10 flex flex-col items-center w-full">
+              <div className="font-cormorant text-[42px] leading-[42px] font-bold">{averageScore}%</div>
               <div className="h-[12px] w-full rounded-[9px] bg-gradient-to-r from-[#414141] to-[#1E2022] relative overflow-hidden mt-4 shadow-inner">
                 <div className="h-full bg-gradient-to-r from-[#0048A6] to-[#001C40] rounded-[9px] transition-all duration-1000 ease-out relative" style={{ width: `${averageScore}%` }}>
                   <div className="absolute inset-0 bg-white/20 w-1/2 blur-sm skew-x-12 translate-x-full animate-shine" />
@@ -93,7 +93,7 @@ export default function DashboardPage() {
           <div className="flex-1 rounded-[9px] p-6 relative overflow-hidden group shadow-xl flex flex-col"
             style={{ background: "linear-gradient(156.55deg, #00214D -46.3%, #001C40 114.03%)" }}>
             <h3 className="font-medium text-[24px] leading-[30px] tracking-tight relative z-10">Module<br />Status</h3>
-            <div className="mt-auto flex flex-col gap-3 pb-2 z-10 w-full">
+            <div className="my-auto flex flex-col gap-3 z-10 w-full">
               <StatusItem label="Ingestion" status={events.length > 0 ? "ok" : "warning"} />
               <StatusItem label="LLM Analysis" status="ok" />
               <StatusItem label="Db Sync" status="ok" />
