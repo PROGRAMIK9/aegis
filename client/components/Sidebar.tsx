@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Ban, CheckCircle, Activity, LogOut } from "lucide-react";
+import { LayoutDashboard, Ban, CheckCircle, Activity, BookOpen, LogOut } from "lucide-react";
 
 const navItems = [
     { href: "/dashboard", icon: <LayoutDashboard />, label: "Dashboard" },
     { href: "/dashboard/blocklist", icon: <Ban />, label: "Blocklist" },
     { href: "/dashboard/whitelist", icon: <CheckCircle />, label: "Whitelist" },
     { href: "/dashboard/live-feed", icon: <Activity />, label: "Live feed" },
+    { href: "/dashboard/docs", icon: <BookOpen />, label: "Docs" },
 ];
 
 export default function Sidebar() {
