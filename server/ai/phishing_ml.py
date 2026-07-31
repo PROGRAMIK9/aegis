@@ -17,7 +17,7 @@ def get_trained_model():
     # Generate synthetic training data for the hackathon demo
     # We create some "good" URLs and some "phishing" URLs
     # Features match order in extract_url_features: 
-    # [length, domain_length, path_length, dots, hyphens, at, digits, https, ip, entropy, domain_entropy, impersonation, exact_brand]
+    # [length, domain_length, path_length, dots, hyphens, at, digits, https, ip, entropy, domain_entropy, impersonation, exact_brand, embedded_brand]
     
     X_train = []
     y_train = []
@@ -51,12 +51,12 @@ def get_trained_model():
         # random good
         X_train.append([np.random.randint(15, 40), np.random.randint(5, 15), np.random.randint(0, 10), 
                         np.random.randint(1, 3), 0, 0, np.random.randint(0, 5), 1, 0, 
-                        np.random.uniform(2.5, 3.5), np.random.uniform(2.0, 3.0), 100, 1])
+                        np.random.uniform(2.5, 3.5), np.random.uniform(2.0, 3.0), 100, 1, 0])
         y_train.append(0)
         # random bad
         X_train.append([np.random.randint(40, 100), np.random.randint(15, 30), np.random.randint(5, 30), 
                         np.random.randint(3, 8), np.random.randint(1, 5), np.random.randint(0, 2), np.random.randint(5, 20), 0, np.random.randint(0, 2), 
-                        np.random.uniform(3.5, 5.0), np.random.uniform(3.0, 4.5), np.random.randint(1, 4), 0])
+                        np.random.uniform(3.5, 5.0), np.random.uniform(3.0, 4.5), np.random.randint(1, 4), 0, 1])
         y_train.append(1)
 
     _model = RandomForestClassifier(n_estimators=50, random_state=42)
@@ -84,7 +84,9 @@ def predict_phishing_ml(url: str) -> dict:
         reasons.append("URL contains an IP address instead of a domain name")
     if features_dict['brand_impersonation_score'] <= 2:
         reasons.append("Domain name is suspiciously similar to a known brand")
-    if features_dict['entropy'] > 4.0:
+    if features_dict['embedded_brand'] == 1 and features_dict['exact_brand_match'] == 0:
+        reasons.append("A known brand name is deceptively embedded inside the domain")
+    if features_dict['entropy'] > 4.5:
         reasons.append("Unusually high character entropy (random-looking string)")
         
     return {
