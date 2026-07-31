@@ -18,7 +18,7 @@ export default function Home() {
           {!isLoggedIn && (
             <Link href="/login" className="px-6 py-2 rounded-[6px] bg-gradient-to-r from-[#003882] to-[#0048A6] text-white font-medium hover:brightness-110 transition-all shadow-[0_0_12px_rgba(0,30,100,0.4)] border border-white/10">Sign in</Link>
           )}
-          <Link href="#" className="px-6 py-2 rounded-[6px] bg-gradient-to-b from-[#1C1F2B]/80 to-[#12141A]/80 text-white font-medium hover:brightness-110 transition-all border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]">Docs</Link>
+          <Link href="/docs" className="px-6 py-2 rounded-[6px] bg-gradient-to-b from-[#1C1F2B]/80 to-[#12141A]/80 text-white font-medium hover:brightness-110 transition-all border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]">Docs</Link>
           {isLoggedIn && (
             <Link href="/dashboard" className="px-6 py-2 rounded-[6px] bg-gradient-to-r from-[#003882] to-[#0048A6] text-white font-medium hover:brightness-110 transition-all shadow-[0_0_12px_rgba(0,30,100,0.4)] border border-white/10">View dashboard</Link>
           )}
