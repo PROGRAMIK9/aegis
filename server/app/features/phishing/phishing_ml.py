@@ -79,15 +79,15 @@ def predict_phishing_ml(url: str) -> dict:
     # We look at standard deviations from mean (not true SHAP, but works for explainability demo)
     reasons = []
     if features_dict['num_hyphens'] > 2:
-        reasons.append("High number of hyphens in URL")
+        reasons.append("High number of hyphens in domain")
     if features_dict['has_ip'] == 1:
         reasons.append("URL contains an IP address instead of a domain name")
     if features_dict['brand_impersonation_score'] <= 2:
         reasons.append("Domain name is suspiciously similar to a known brand")
     if features_dict['embedded_brand'] == 1 and features_dict['exact_brand_match'] == 0:
         reasons.append("A known brand name is deceptively embedded inside the domain")
-    if features_dict['entropy'] > 4.5:
-        reasons.append("Unusually high character entropy (random-looking string)")
+    if features_dict['domain_entropy'] > 4.0:
+        reasons.append("Unusually high character entropy in domain (random-looking string)")
         
     return {
         "ml_score": int(prob * 100),

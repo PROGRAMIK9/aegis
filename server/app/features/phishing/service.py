@@ -75,10 +75,8 @@ def score_phishing_service(db: Session, url: str, text_content: str = None, user
         llm_res["llm_score"] = llm_analysis.get("llm_score", 0)
         if llm_analysis.get("llm_reason"):
              llm_res["llm_reasons"] = [llm_analysis["llm_reason"]]
-             
-        weighted_score = (rule_res["rule_score"] * 0.3) + (ml_res["ml_score"] * 0.4) + (llm_res["llm_score"] * 0.3)
-        max_score = max(base_max, llm_res["llm_score"])
-        final_score = int(max(weighted_score, max_score))
+        # Use a purely weighted score to prevent LLM false positives (e.g., security blogs) from completely overriding the ML
+        final_score = int((rule_res["rule_score"] * 0.3) + (ml_res["ml_score"] * 0.4) + (llm_res["llm_score"] * 0.3))
     else:
         final_score = base_score
         
