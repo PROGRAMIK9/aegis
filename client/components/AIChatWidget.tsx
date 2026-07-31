@@ -9,7 +9,34 @@ export default function AIChatWidget() {
         { id: 1, role: 'assistant', content: "Hello! I am Aegis AI. I'm actively monitoring your traffic. Any questions about recent threats?" }
     ]);
     const [loading, setLoading] = useState(false);
+    const [historyLoaded, setHistoryLoaded] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isOpen && !historyLoaded) {
+            setLoading(true);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            fetch(`${apiUrl}/api/v1/chat/history`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.messages && data.messages.length > 0) {
+                        const formatted = data.messages.map((m: any) => ({
+                            id: m.id,
+                            role: m.role,
+                            content: m.content
+                        }));
+                        setChatMessages(formatted);
+                    }
+                    setHistoryLoaded(true);
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.error("Failed to load chat history", err);
+                    setHistoryLoaded(true);
+                    setLoading(false);
+                });
+        }
+    }, [isOpen, historyLoaded]);
 
     useEffect(() => {
         if (isOpen && chatEndRef.current) {

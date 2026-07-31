@@ -94,21 +94,89 @@ def analyze_text_with_llm(text_content: str) -> dict:
             print(f"Ollama error: {e}")
             return {"llm_score": 0, "llm_reason": f"Ollama local API error: {str(e)}"}
 
-def chat_with_llm(message: str) -> str:
+def chat_with_llm(messages: list) -> dict:
     """
-    Generic chat functionality using the configured LLM.
+    Generic chat functionality using the configured LLM, supporting tool calls.
+    Returns the message object which may contain 'content' and 'tool_calls'.
     """
-    prompt = f"You are Aegis, a helpful cybersecurity AI assistant. Respond to the user's message concisely.\n\nUser: {message}\nAegis:"
-    
     if LLM_PROVIDER.lower() == "groq":
         try:
+            tools = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "add_to_whitelist",
+                        "description": "Add a domain to the user's whitelist so it is never blocked.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "domain": {"type": "string", "description": "The domain name (e.g. google.com)"}
+                            },
+                            "required": ["domain"]
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "remove_from_whitelist",
+                        "description": "Remove a domain from the user's whitelist.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "domain": {"type": "string", "description": "The domain name"}
+                            },
+                            "required": ["domain"]
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "add_to_blocklist",
+                        "description": "Add a domain to the user's explicit blocklist so it is always blocked.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "domain": {"type": "string", "description": "The domain name"}
+                            },
+                            "required": ["domain"]
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "remove_from_blocklist",
+                        "description": "Remove a domain from the user's blocklist.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "domain": {"type": "string", "description": "The domain name"}
+                            },
+                            "required": ["domain"]
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "clear_logs",
+                        "description": "Clear all recent event logs from the database.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {}
+                        }
+                    }
+                }
+            ]
+            
             payload = {
                 "model": GROQ_MODEL,
-                "messages": [
-                    {"role": "system", "content": "You are Aegis, a helpful cybersecurity AI assistant. Respond concisely."},
-                    {"role": "user", "content": message}
-                ],
-                "temperature": 0.7
+                "messages": messages,
+                "temperature": 0.3,
+                "tools": tools,
+                "tool_choice": "auto"
             }
             headers = {
                 "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -116,21 +184,23 @@ def chat_with_llm(message: str) -> str:
             }
             res = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=120)
             res.raise_for_status()
-            return res.json()["choices"][0]["message"]["content"].strip()
+            
+            return res.json()["choices"][0]["message"]
         except Exception as e:
-            return f"Groq API error: {str(e)}"
+            return {"role": "assistant", "content": f"Groq API error: {str(e)}"}
     else:
-        # Default to Ollama
+        # Default to Ollama fallback (no tools)
         try:
+            last_msg = messages[-1]["content"] if messages else ""
             payload = {
                 "model": OLLAMA_MODEL,
-                "prompt": prompt,
+                "prompt": f"User: {last_msg}\nAegis:",
                 "stream": False
             }
             res = requests.post(OLLAMA_URL, json=payload, timeout=120)
             res.raise_for_status()
             response_json = res.json()
-            return response_json.get("response", "Sorry, I couldn't generate a response.").strip()
+            return {"role": "assistant", "content": response_json.get("response", "Sorry, I couldn't generate a response.").strip()}
         except Exception as e:
             print(f"Ollama error: {e}")
-            return f"Ollama local API error: {str(e)}"
+            return {"role": "assistant", "content": f"Ollama local API error: {str(e)}"}

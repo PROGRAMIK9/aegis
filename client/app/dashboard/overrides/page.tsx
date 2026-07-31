@@ -9,23 +9,41 @@ export default function OverridesPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("http://localhost:8000/api/v1/events?limit=50")
-            .then(res => res.json())
-            .then(data => {
-                if (data.events) {
-                    const blocked = data.events.filter((e: any) => e.tier === "high" || e.tier === "critical");
-                    setBlockedEvents(blocked);
+        Promise.all([
+            fetch("http://localhost:8000/api/v1/events?limit=50").then(r => r.json()),
+            fetch("http://localhost:8000/api/v1/phishing/blocklist").then(r => r.json()),
+            fetch("http://localhost:8000/api/v1/phishing/whitelist").then(r => r.json())
+        ])
+        .then(([eventsData, blocklistData, whitelistData]) => {
+            const blocked = (eventsData.events || []).filter((e: any) => e.tier === "high" || e.tier === "critical");
+            
+            const explicitBlocks = (blocklistData.blocklist || []).map((b: any) => ({
+                id: `explicit_block_${b.domain}`,
+                target: b.domain,
+                tier: "critical",
+                score: 100,
+                verdict: "Blocked manually by user",
+                isExplicit: true
+            }));
+            
+            setBlockedEvents([...explicitBlocks, ...blocked]);
 
-                    const safe = data.events.filter((e: any) => e.verdict.includes("Reviewed by You") || e.tier === "safe");
-                    const unique = safe.filter((v: any, i: number, a: any[]) => a.findIndex(t => (t.target === v.target)) === i);
-                    setWhitelist(unique);
-                }
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error(err);
-                setLoading(false);
-            });
+            const explicitWhitelists = (whitelistData.whitelist || []).map((w: any) => ({
+                id: `explicit_white_${w.domain}`,
+                target: w.domain,
+                tier: "safe",
+                score: 0,
+                verdict: "Allowed by user",
+                isExplicit: true
+            }));
+            
+            setWhitelist(explicitWhitelists);
+            setLoading(false);
+        })
+        .catch(err => {
+            console.error(err);
+            setLoading(false);
+        });
     }, []);
 
     return (
@@ -67,20 +85,43 @@ export default function OverridesPage() {
                                             <span className="text-[11px] font-inter uppercase tracking-widest font-bold px-3 py-1 rounded-full border border-red-500/40 text-red-400">
                                                 {event.tier}
                                             </span>
-                                            <button 
-                                              className="text-xs font-medium px-3 py-1 bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 rounded-full transition-colors flex items-center gap-1"
-                                              onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  fetch(`http://localhost:8000/api/v1/phishing/whitelist`, {
-                                                    method: 'POST',
-                                                    headers: { 'Content-Type': 'application/json' },
-                                                    body: JSON.stringify({ domain: event.target })
-                                                  }).then(() => alert("Added to whitelist!"));
-                                              }}
-                                            >
-                                                <CheckCircle size={12} />
-                                                Mark Safe
-                                            </button>
+                                            {event.isExplicit ? (
+                                                <button 
+                                                  className="text-xs font-medium px-3 py-1 bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 rounded-full transition-colors flex items-center gap-1"
+                                                  onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      fetch(`http://localhost:8000/api/v1/phishing/blocklist`, {
+                                                        method: 'DELETE',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ domain: event.target })
+                                                      }).then(() => {
+                                                          alert("Removed from explicit blocklist!");
+                                                          window.location.reload();
+                                                      });
+                                                  }}
+                                                >
+                                                    <Trash2 size={12} />
+                                                    Remove
+                                                </button>
+                                            ) : (
+                                              <button 
+                                                className="text-xs font-medium px-3 py-1 bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 rounded-full transition-colors flex items-center gap-1"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    fetch(`http://localhost:8000/api/v1/phishing/whitelist`, {
+                                                      method: 'POST',
+                                                      headers: { 'Content-Type': 'application/json' },
+                                                      body: JSON.stringify({ domain: event.target })
+                                                    }).then(() => {
+                                                        alert("Added to whitelist!");
+                                                        window.location.reload();
+                                                    });
+                                                }}
+                                              >
+                                                  <CheckCircle size={12} />
+                                                  Mark Safe
+                                              </button>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-2">
@@ -113,7 +154,14 @@ export default function OverridesPage() {
                                               className="text-xs font-medium px-3 py-1 bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 rounded-full transition-colors flex items-center gap-1"
                                               onClick={(e) => {
                                                   e.stopPropagation();
-                                                  alert("Remove from whitelist API call would happen here.");
+                                                  fetch(`http://localhost:8000/api/v1/phishing/whitelist`, {
+                                                    method: 'DELETE',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ domain: item.target })
+                                                  }).then(() => {
+                                                      alert("Removed from whitelist!");
+                                                      window.location.reload();
+                                                  });
                                               }}
                                             >
                                                 <Trash2 size={12} />
