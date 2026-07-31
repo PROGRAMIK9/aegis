@@ -46,7 +46,7 @@ export default function DocsContent({ isDashboard = false }: { isDashboard?: boo
   );
 
   return (
-    <div className="w-full flex flex-col flex-1 min-h-0">
+    <div className={`w-full flex flex-col flex-1 ${isDashboard ? "h-full min-h-0" : "min-h-0"}`}>
       {/* Header Banner if standalone page */}
       {!isDashboard && (
         <header className="flex justify-between items-center w-full px-8 py-6 bg-gradient-to-r from-transparent via-[#003882]/20 to-[#0048A6]/30 border-b border-white/10 mb-6">
@@ -76,7 +76,7 @@ export default function DocsContent({ isDashboard = false }: { isDashboard?: boo
       )}
 
       {/* Main Container */}
-      <div className={`flex-1 flex flex-col lg:flex-row gap-8 ${isDashboard ? "pt-2" : "px-8 pb-12"}`}>
+      <div className={`flex-1 flex flex-col lg:flex-row gap-8 ${isDashboard ? "pt-2 min-h-0" : "px-8 pb-12"}`}>
         {/* Sidebar Nav */}
         <div className="w-full lg:w-[280px] shrink-0 flex flex-col gap-4">
           {/* Search Box */}
@@ -152,7 +152,7 @@ export default function DocsContent({ isDashboard = false }: { isDashboard?: boo
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto pr-2 space-y-10 custom-scrollbar max-w-[1200px]">
+        <div className="flex-1 overflow-y-auto pb-24 pr-2 space-y-10 custom-scrollbar max-w-[1200px]">
           {/* Page Title */}
           <div className="flex flex-col gap-2 pb-6 border-b border-white/10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0048A6]/30 border border-[#0048A6]/50 text-cyan-300 font-mono text-xs w-fit">

@@ -31,14 +31,14 @@ export default function AIChatWidget() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    session_id: "dashboard_chat",
+                    role: "user",
                     content: chatInput
                 })
             });
             const data = await res.json();
             
-            if (data.ai_message) {
-                setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: data.ai_message }]);
+            if (data.content) {
+                setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: data.content }]);
             } else {
                 setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: "Sorry, I couldn't process that." }]);
             }
