@@ -25,4 +25,6 @@ dependencies = [
     "pyjwt>=2.13.0",
     "passlib[bcrypt]>=1.7.4",
     "google-auth>=2.56.2",
+    "bcrypt>=5.0.0",
+    "python-multipart>=0.0.32",
 ]

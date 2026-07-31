@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from app.api.deps import get_db
+from app.api.deps import get_db, get_optional_user
+from app.features.auth.models import User
 from app.features.phishing.models import PhishingEvent
 from app.features.fraud.models import FraudEvent
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 router = APIRouter(tags=["Events"])
 
@@ -12,13 +13,17 @@ def list_events(
     type: str | None = Query(default=None, description="Filter by event type: phishing | fraud"),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_optional_user)
 ):
     """Retrieve recent events for the dashboard live feed."""
     events: List[Dict[str, Any]] = []
     
     if type is None or type == "phishing":
-        phishing_db = db.query(PhishingEvent).order_by(PhishingEvent.created_at.desc()).all()
+        query = db.query(PhishingEvent)
+        if user:
+            query = query.filter(PhishingEvent.user_id == user.id)
+        phishing_db = query.order_by(PhishingEvent.created_at.desc()).all()
         for e in phishing_db:
             events.append({
                 "id": f"p_{e.id}",
@@ -29,7 +34,10 @@ def list_events(
             })
             
     if type is None or type == "fraud":
-        fraud_db = db.query(FraudEvent).order_by(FraudEvent.created_at.desc()).all()
+        query = db.query(FraudEvent)
+        if user:
+            query = query.filter(FraudEvent.user_id == user.id)
+        fraud_db = query.order_by(FraudEvent.created_at.desc()).all()
         for e in fraud_db:
             events.append({
                 "id": f"f_{e.id}",
