@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "ollama")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
     OLLAMA_URL: str = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 
     # JWT Config
     SECRET_KEY: str = os.getenv("SECRET_KEY", "super-secret-key-for-development-only")

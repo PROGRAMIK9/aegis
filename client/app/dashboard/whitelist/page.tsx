@@ -7,17 +7,22 @@ export default function WhitelistPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Ideally we fetch from /api/v1/phishing/whitelist, but for now we'll fetch events and filter safe ones
-        // or just show a placeholder if no endpoint exists yet to list whitelist
-        fetch("http://localhost:8000/api/v1/events?limit=50")
+        const token = localStorage.getItem("aegis_token");
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+        
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        fetch(`${apiUrl}/api/v1/phishing/whitelist`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
             .then(res => res.json())
             .then(data => {
-                if (data.events) {
-                    const safe = data.events.filter((e: any) => e.verdict.includes("Reviewed by You") || e.tier === "safe");
-                    
-                    // Deduplicate by domain
-                    const unique = safe.filter((v: any, i: number, a: any[]) => a.findIndex(t => (t.target === v.target)) === i);
-                    setWhitelist(unique);
+                if (data.whitelist) {
+                    setWhitelist(data.whitelist);
                 }
                 setLoading(false);
             })
@@ -41,13 +46,13 @@ export default function WhitelistPage() {
                     {loading ? (
                         <div className="text-white/40 italic">Loading whitelist...</div>
                     ) : whitelist.length > 0 ? (
-                        whitelist.map((item) => (
-                            <div key={item.id} className="p-6 rounded-[9px] border border-green-500/40 bg-green-500/5 backdrop-blur-sm shadow-xl transition-all hover:scale-[1.005] cursor-pointer"
+                        whitelist.map((item, index) => (
+                            <div key={index} className="p-6 rounded-[9px] border border-green-500/40 bg-green-500/5 backdrop-blur-sm shadow-xl transition-all hover:scale-[1.005] cursor-pointer"
                                 style={{ background: "radial-gradient(100% 150% at 50% 50%, #1A2E20 0%, #122116 60%, #0A130C 100%)" }}>
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-3">
                                         <CheckCircle className="w-5 h-5 text-green-400" />
-                                        <h3 className="font-inter font-medium text-lg text-white max-w-xl truncate">{item.target}</h3>
+                                        <h3 className="font-inter font-medium text-lg text-white max-w-xl truncate">{item.domain}</h3>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className="text-[11px] font-inter uppercase tracking-widest font-bold px-3 py-1 rounded-full border border-green-500/40 text-green-400">
@@ -57,7 +62,22 @@ export default function WhitelistPage() {
                                           className="text-xs font-medium px-3 py-1 bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 rounded-full transition-colors flex items-center gap-1"
                                           onClick={(e) => {
                                               e.stopPropagation();
-                                              alert("Remove from whitelist API call would happen here.");
+                                              const token = localStorage.getItem("aegis_token");
+                                              if (!token) return;
+                                              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                                              fetch(`${apiUrl}/api/v1/phishing/whitelist`, {
+                                                  method: "DELETE",
+                                                  headers: {
+                                                      "Content-Type": "application/json",
+                                                      "Authorization": `Bearer ${token}`
+                                                  },
+                                                  body: JSON.stringify({ domain: item.domain })
+                                              })
+                                              .then(res => {
+                                                  if (res.ok) {
+                                                      setWhitelist(prev => prev.filter(w => w.domain !== item.domain));
+                                                  }
+                                              });
                                           }}
                                         >
                                             <Trash2 size={12} />
@@ -66,7 +86,7 @@ export default function WhitelistPage() {
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <p className="font-inter text-white/70 text-sm"><span className="text-white/40">Score:</span> <span className="font-bold text-green-400">{item.score}/100</span> — Allowed by user</p>
+                                    <p className="font-inter text-white/70 text-sm"><span className="text-white/40">Status:</span> <span className="font-bold text-green-400">Exempt from Scanning</span> — Allowed by user</p>
                                 </div>
                             </div>
                         ))

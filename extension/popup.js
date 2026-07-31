@@ -49,16 +49,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
             currentTab = tabs[0];
             if (currentTab && currentTab.url) {
-                currentUrlEl.textContent = currentTab.url;
+                let activeUrl = currentTab.url;
                 try {
-                    currentDomain = new URL(currentTab.url).hostname;
+                    const parsedUrl = new URL(currentTab.url);
+                    if (parsedUrl.hostname === 'localhost' && parsedUrl.searchParams.has('blocked') && parsedUrl.searchParams.has('url')) {
+                        activeUrl = parsedUrl.searchParams.get('url');
+                    }
+                    currentDomain = new URL(activeUrl).hostname;
                 } catch (e) {
-                    currentDomain = currentTab.url;
+                    currentDomain = activeUrl;
                 }
+                currentUrlEl.textContent = activeUrl;
 
                 // Load background scan result
                 chrome.storage.local.get(['latest_scan', 'latest_url'], (res) => {
-                    if (res.latest_url === currentTab.url && res.latest_scan) {
+                    if (res.latest_url === activeUrl && res.latest_scan) {
                         renderResult(res.latest_scan);
                         flagStatus.classList.add('hidden');
                         flagLegitBtn.disabled = false;
@@ -203,6 +208,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ? "Added to your personal whitelist!" 
                     : "Thank you! Flag recorded.";
                 flagStatus.className = "flag-status success";
+
+                if (flagType === 'whitelist') {
+                    let activeUrl = currentTab.url;
+                    try {
+                        const parsedUrl = new URL(currentTab.url);
+                        if (parsedUrl.hostname === 'localhost' && parsedUrl.searchParams.has('url')) {
+                            activeUrl = parsedUrl.searchParams.get('url');
+                        }
+                    } catch(e) {}
+                    chrome.tabs.update(currentTab.id, { url: activeUrl });
+                    setTimeout(() => window.close(), 1000);
+                }
             } else {
                 throw new Error("Failed");
             }

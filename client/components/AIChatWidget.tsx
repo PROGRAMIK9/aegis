@@ -26,16 +26,27 @@ export default function AIChatWidget() {
         setLoading(true);
 
         try {
-            // Hardcoded response for now since LLM backend chat endpoint might not exist yet
-            // Ideally: fetch('/api/v1/llm/chat', { ... })
-            setTimeout(() => {
-                const response = "I've reviewed the latest logs. Everything looks secure. The rule engine and ML models have safely processed all recent traffic without issues.";
-                setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: response }]);
-                setLoading(false);
-            }, 1000);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/v1/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: "dashboard_chat",
+                    content: chatInput
+                })
+            });
+            const data = await res.json();
+            
+            if (data.ai_message) {
+                setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: data.ai_message }]);
+            } else {
+                setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: "Sorry, I couldn't process that." }]);
+            }
+            setLoading(false);
         } catch (error) {
             console.error(error);
             setLoading(false);
+            setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: "An error occurred while connecting to Aegis." }]);
         }
     };
 

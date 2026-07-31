@@ -2,14 +2,6 @@
 import { useEffect, useState } from "react";
 import { Circle } from "lucide-react";
 
-const mockEvents = [
-    { id: 1, time: "15:28:04", type: "phishing", message: "Blocked paypa1-login.tk — credential harvesting detected", score: 82 },
-    { id: 2, time: "15:27:51", type: "fraud", message: "Transaction anomaly flagged on update-secure-auth.com", score: 95 },
-    { id: 3, time: "15:27:33", type: "clean", message: "Verified legitimate-bank-login.com — no threats found", score: 12 },
-    { id: 4, time: "15:26:19", type: "phishing", message: "Suspicious redirect chain detected via free-prize-claim.xyz", score: 78 },
-    { id: 5, time: "15:25:42", type: "clean", message: "DNS resolution normal for cdn.trusted-service.com", score: 5 },
-];
-
 const typeColors: Record<string, string> = {
     phishing: "text-red-400",
     fraud: "text-amber-400",
@@ -17,12 +9,46 @@ const typeColors: Record<string, string> = {
 };
 
 export default function LiveFeedPage() {
-    const [events, setEvents] = useState(mockEvents);
+    const [events, setEvents] = useState<any[]>([]);
     const [pulse, setPulse] = useState(true);
 
     useEffect(() => {
-        const interval = setInterval(() => setPulse((p) => !p), 1000);
-        return () => clearInterval(interval);
+        const pulseInterval = setInterval(() => setPulse((p) => !p), 1000);
+        
+        const fetchEvents = () => {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            fetch(`${apiUrl}/api/v1/events?limit=50`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.events) {
+                        const formattedEvents = data.events.map((e: any) => {
+                            const date = new Date(e.created_at);
+                            const time = date.toLocaleTimeString('en-US', { hour12: false });
+                            let msgType = "clean";
+                            if (e.tier === "high" || e.tier === "critical") msgType = "phishing";
+                            else if (e.tier === "moderate") msgType = "fraud";
+                            
+                            return {
+                                id: e.id,
+                                time: time,
+                                type: msgType,
+                                message: `[${e.verdict}] ${e.target}`,
+                                score: e.score
+                            };
+                        });
+                        setEvents(formattedEvents);
+                    }
+                })
+                .catch(console.error);
+        };
+
+        fetchEvents();
+        const pollInterval = setInterval(fetchEvents, 3000);
+
+        return () => {
+            clearInterval(pulseInterval);
+            clearInterval(pollInterval);
+        };
     }, []);
 
     return (

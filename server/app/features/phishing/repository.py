@@ -12,9 +12,13 @@ class PhishingRepository:
             reasons_jsonb=json.dumps(result["reasons"]),
             user_id=user_id
         )
-        db.add(db_event)
-        db.commit()
-        db.refresh(db_event)
+        try:
+            db.add(db_event)
+            db.commit()
+            db.refresh(db_event)
+        except Exception as e:
+            db.rollback()
+            print(f"Error saving phishing event to DB: {e}")
         return db_event
 
 phishing_repo = PhishingRepository()

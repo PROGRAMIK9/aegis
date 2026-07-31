@@ -22,6 +22,14 @@ from app.api.deps import get_current_user
 from app.features.phishing.models import UserWhitelist
 from urllib.parse import urlparse
 
+@router.get("/whitelist")
+def get_whitelist(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    whitelists = db.query(UserWhitelist).filter(UserWhitelist.user_id == user.id).all()
+    return {"whitelist": [{"domain": w.domain} for w in whitelists]}
+
 @router.post("/whitelist")
 def add_to_whitelist(
     req: WhitelistRequest,
@@ -41,3 +49,22 @@ def add_to_whitelist(
         db.commit()
     
     return {"status": "success", "message": f"{domain} has been added to your personal whitelist."}
+
+@router.delete("/whitelist")
+def remove_from_whitelist(
+    req: WhitelistRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    domain = urlparse(req.domain).netloc or req.domain
+    existing = db.query(UserWhitelist).filter(
+        UserWhitelist.user_id == user.id,
+        UserWhitelist.domain == domain
+    ).first()
+    
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return {"status": "success", "message": f"{domain} has been removed from your personal whitelist."}
+    
+    return {"status": "error", "message": "Domain not found in whitelist."}
