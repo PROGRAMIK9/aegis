@@ -23,7 +23,7 @@ export default function Home() {
     setPhishingLoading(true);
     setPhishingResult(null);
     try {
-      const res = await fetch(`${API_URL}/phishing/check`, {
+      const res = await fetch(`${API_URL}/api/v1/phishing/check`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -45,7 +45,7 @@ export default function Home() {
     setFraudLoading(true);
     setFraudResult(null);
     try {
-      const res = await fetch(`${API_URL}/fraud/score`, {
+      const res = await fetch(`${API_URL}/api/v1/fraud/score`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,7 +91,7 @@ export default function Home() {
       <div className={`p-4 border rounded ${colorClass} mt-4`}>
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-bold text-lg">Verdict: {result.verdict}</h3>
-          <span className="font-mono text-xl font-bold bg-white/50 px-2 py-1 rounded">Score: {result.score}/100</span>
+          <span className="font-mono text-xl font-bold bg-white/50 px-2 py-1 rounded">Score: {result.final_score}/100</span>
         </div>
         <p className="mb-2"><strong>Tier:</strong> <span className="uppercase">{result.tier}</span></p>
         
