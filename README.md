@@ -1,6 +1,6 @@
-# ABBS Project
+# Aegis - Phishing Shield
 
-This project contains a Next.js frontend (`client`) and a FastAPI backend (`server`).
+This project contains a Next.js frontend (`client`), a FastAPI backend (`server`), and a Chrome extension (`extension`).
 
 ## Prerequisites
 
@@ -23,6 +23,13 @@ Open a terminal and navigate to the `server` directory:
 cd server
 ```
 
+Copy the example environment variables and configure your LLM provider (Ollama or Groq API):
+
+```bash
+cp .env.example .env
+```
+*Note: Make sure to open `.env` and set `LLM_PROVIDER`, `OLLAMA_MODEL`, or `GROQ_API_KEY` accordingly before starting.*
+
 Install the dependencies (if you haven't already):
 
 ```bash
@@ -30,12 +37,18 @@ uv sync
 ```
 *(Note: `uv` will automatically create a `.venv` virtual environment for you.)*
 
+Initialize the SQLite database with Alembic migrations:
+
+```bash
+uv run alembic upgrade head
+```
+
 Run the FastAPI development server:
 
 ```bash
-uv run fastapi dev main.py
+uv run fastapi dev app/main.py
 ```
-*(Alternatively, you can run `uv run uvicorn main:app --reload`)*
+*(Alternatively, you can run `uv run uvicorn app.main:app --reload`)*
 
 The backend server will start at **http://localhost:8000** (or similar, check the terminal output).
 
@@ -62,3 +75,13 @@ bun run dev
 ```
 
 The frontend will be available at **http://localhost:3000** (or similar, check the terminal output).
+
+---
+
+### 3. Install the Chrome Extension
+
+To enable real-time phishing detection in your browser:
+1. Open Google Chrome and navigate to `chrome://extensions/`.
+2. Enable **Developer mode** in the top right corner.
+3. Click **Load unpacked** and select the `extension` folder located in the root of this project.
+4. The Aegis Phishing Shield extension is now active!
