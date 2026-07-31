@@ -19,3 +19,10 @@ class UserWhitelist(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     domain = Column(String, index=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class UserBlocklist(Base):
+    __tablename__ = "user_blocklists"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    domain = Column(String, index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
