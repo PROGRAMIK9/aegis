@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis Shield</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-icon"></div>
+                <h1 class="logo-text">Aegis</h1>
+            </div>
+            <p class="subtitle">AI Threat Intelligence</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="url-container" class="url-container">
+                <span class="url-label">Current Page</span>
+                <p id="current-url" class="current-url truncate">Loading...</p>
+            </div>
+
+            <!-- Action Button -->
+            <button id="scan-btn" class="scan-btn">
+                <span class="btn-text">Scan for Threats</span>
+                <div class="spinner hidden" id="spinner"></div>
+            </button>
+
+            <!-- Results Section (Hidden by default) -->
+            <div id="result-container" class="result-container hidden">
+                <div id="verdict-banner" class="verdict-banner">
+                    <h2 id="verdict-title" class="verdict-title">SAFE</h2>
+                    <div class="score-circle">
+                        <span id="score-value">0</span><span class="score-max">/100</span>
+                    </div>
+                </div>
+
+                <div class="details-section">
+                    <div class="detail-row">
+                        <span class="detail-label">Risk Tier</span>
+                        <span id="tier-value" class="tier-badge">Safe</span>
+                    </div>
+                    
+                    <div id="reasons-container" class="reasons-container hidden">
+                        <h3 class="reasons-title">Detected Indicators:</h3>
+                        <ul id="reasons-list" class="reasons-list"></ul>
+                    </div>
+
+                    <div id="breakdown-container" class="breakdown-container hidden">
+                        <div class="breakdown-row">
+                            <span>Rule Engine</span>
+                            <span id="bd-rule" class="bd-score">0</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span>Machine Learning</span>
+                            <span id="bd-ml" class="bd-score">0</span>
+                        </div>
+                        <div class="breakdown-row">
+                            <span>LLM Analysis</span>
+                            <span id="bd-llm" class="bd-score">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="error-container" class="error-container hidden">
+                <p id="error-message"></p>
+            </div>
+        </main>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

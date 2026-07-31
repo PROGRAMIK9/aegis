@@ -1,8 +1,20 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
+from app.core.database import engine, Base
 
-app = FastAPI(title="ABBS AI Backend - Enterprise DDD")
+# Import all models so Base.metadata is aware of them for table creation
+import app.features.phishing.models
+import app.features.fraud.models
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Automatically create missing database tables on application startup
+    Base.metadata.create_all(bind=engine)
+    yield
+
+app = FastAPI(title="Aegis AI Backend - Enterprise DDD", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,5 +28,6 @@ app.add_middleware(
 def home():
     return {"message": "Hello from Aegis Backend"}
 
+# Include routers under /api/v1 prefix as well as root level for maximum compatibility
 app.include_router(api_router, prefix="/api/v1")
-
+app.include_router(api_router)

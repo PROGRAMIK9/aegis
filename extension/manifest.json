@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Aegis Phishing Shield",
+  "version": "1.0",
+  "description": "Enterprise-grade real-time phishing and fraud detection for your browser.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Analyze Current Page"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*"
+  ]
+}

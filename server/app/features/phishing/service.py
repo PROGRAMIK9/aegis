@@ -16,19 +16,32 @@ def score_phishing_service(db: Session, url: str, text_content: str = None) -> d
              llm_res["llm_reasons"] = [llm_analysis["llm_reason"]]
              
     if text_content:
-        final_score = int((rule_res["rule_score"] * 0.3) + (ml_res["ml_score"] * 0.4) + (llm_res["llm_score"] * 0.3))
+        weighted_score = (rule_res["rule_score"] * 0.3) + (ml_res["ml_score"] * 0.4) + (llm_res["llm_score"] * 0.3)
     else:
-        final_score = int((rule_res["rule_score"] * 0.4) + (ml_res["ml_score"] * 0.6))
+        weighted_score = (rule_res["rule_score"] * 0.4) + (ml_res["ml_score"] * 0.6)
+        
+    max_score = max(rule_res["rule_score"], ml_res["ml_score"], llm_res.get("llm_score", 0))
+    final_score = int(max(weighted_score, max_score))
         
     all_reasons = rule_res["rule_reasons"] + ml_res["ml_reasons"] + llm_res.get("llm_reasons", [])
     
-    if final_score > 75: verdict = "CRITICAL_RISK"
-    elif final_score > 40: verdict = "MODERATE_RISK"
-    else: verdict = "SAFE"
+    if final_score > 75: 
+        verdict = "CRITICAL_RISK"
+        tier = "critical"
+    elif final_score > 40: 
+        verdict = "MODERATE_RISK"
+        tier = "moderate"
+    elif final_score > 25:
+        verdict = "REVIEW_NEEDED"
+        tier = "high"
+    else: 
+        verdict = "SAFE"
+        tier = "safe"
         
     result = {
         "final_score": final_score,
         "verdict": verdict,
+        "tier": tier,
         "reasons": all_reasons,
         "breakdown": {
             "rule_score": rule_res["rule_score"],
