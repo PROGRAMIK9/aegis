@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { CheckCircle2, AlertTriangle, XCircle, ScanLine, Link2, CreditCard, RefreshCw, Activity, MessageSquare, LogOut, User as UserIcon, Send } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, ScanLine, Link2, CreditCard, RefreshCw, Activity, MessageSquare, LogOut, User as UserIcon, Send, ShieldAlert } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
@@ -160,7 +160,7 @@ export default function ScanLedger() {
     try {
       const headers = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${API_BASE}/events?limit=10`, { headers });
+      const res = await fetch(`${API_BASE}/events?limit=50`, { headers });
       if (res.ok) {
         const data = await res.json();
         setEvents(data.events || []);
@@ -169,6 +169,30 @@ export default function ScanLedger() {
       console.warn("Could not fetch audit events feed", e);
     } finally {
       setEventsLoading(false);
+    }
+  };
+
+  const addToWhitelist = async (url) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/phishing/whitelist`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ domain: url })
+      });
+      if (res.ok) {
+        alert("Site marked as safe and added to your whitelist!");
+        fetchEvents();
+      } else {
+        const err = await res.json();
+        alert("Failed to whitelist: " + (err.detail || "Unknown error"));
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error adding to whitelist.");
     }
   };
 
@@ -418,6 +442,7 @@ export default function ScanLedger() {
             { key: "phishing", label: "URL Scan", icon: Link2 },
             { key: "fraud", label: "Txn Fraud", icon: CreditCard },
             { key: "chat", label: "AI Chat", icon: MessageSquare },
+            { key: "blocklist", label: "Blocklist", icon: ShieldAlert },
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}
@@ -437,7 +462,36 @@ export default function ScanLedger() {
         </div>
 
         {/* Main Content Area */}
-        {mode === "chat" ? (
+        {mode === "blocklist" ? (
+          <div style={{ background: "#FFFFFF", border: "1px solid #DAD6CC", minHeight: "400px" }} className="flex flex-col rounded-sm p-6">
+            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200">
+              <ShieldAlert size={20} className="text-red-600" />
+              <h2 style={{ fontFamily: "'IBM Plex Mono', monospace" }} className="text-lg font-bold uppercase tracking-wider text-red-700">Blocked Sites Registry</h2>
+            </div>
+            <div className="space-y-3 font-mono text-xs overflow-y-auto max-h-[500px]">
+              {!user ? (
+                <div className="py-10 text-center text-gray-500 italic">Please login to view and manage your blocklist.</div>
+              ) : events.filter(e => e.type === "phishing" && (e.tier?.toLowerCase() === "high" || e.tier?.toLowerCase() === "critical")).length > 0 ? (
+                events.filter(e => e.type === "phishing" && (e.tier?.toLowerCase() === "high" || e.tier?.toLowerCase() === "critical")).map((evt) => (
+                  <div key={evt.id} style={{ border: "1px solid #FCA5A5", background: "#FEF2F2" }} className="p-3 rounded-sm flex items-center justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-red-800 font-bold mb-1 truncate">{evt.target}</div>
+                      <div className="text-[10px] text-red-600">Score: {evt.score}/100 | {evt.verdict}</div>
+                    </div>
+                    <button
+                      onClick={() => addToWhitelist(evt.target)}
+                      className="px-3 py-1.5 bg-green-600 text-white text-[10px] font-bold uppercase rounded-sm hover:bg-green-700 transition-colors flex-shrink-0"
+                    >
+                      Mark as Safe
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="py-10 text-center text-gray-500 italic">No blocked sites recorded. You're completely safe!</div>
+              )}
+            </div>
+          </div>
+        ) : mode === "chat" ? (
           <div style={{ background: "#FFFFFF", border: "1px solid #DAD6CC", minHeight: "400px" }} className="flex flex-col rounded-sm">
             {!user ? (
               <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">

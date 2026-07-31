@@ -33,11 +33,11 @@ def extract_url_features(url: str) -> dict:
     features['domain_length'] = len(domain)
     features['path_length'] = len(path)
     
-    # 2. Character counts and presence
-    features['num_dots'] = url.count('.')
-    features['num_hyphens'] = url.count('-')
+    # 2. Character counts and presence (focusing on domain to avoid penalizing query strings)
+    features['num_dots'] = domain.count('.')
+    features['num_hyphens'] = domain.count('-')
     features['num_at'] = url.count('@')
-    features['num_digits'] = sum(c.isdigit() for c in url)
+    features['num_digits'] = sum(c.isdigit() for c in domain)
     features['has_https'] = 1 if url.startswith("https://") else 0
     features['has_ip'] = 1 if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', domain) else 0
     
