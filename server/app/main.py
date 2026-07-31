@@ -14,7 +14,7 @@ app.add_middleware(
 
 @app.get("/")
 def home():
-    return {"message": "Hello from ABBS AI Backend (Enterprise Edition)!"}
+    return {"message": "Hello from Aegis Backend"}
 
 app.include_router(api_router, prefix="/api/v1")
 
