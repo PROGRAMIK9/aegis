@@ -16,7 +16,10 @@ export default function AIChatWidget() {
         if (isOpen && !historyLoaded) {
             setLoading(true);
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            fetch(`${apiUrl}/api/v1/chat/history`)
+            const token = localStorage.getItem('aegis_token');
+            fetch(`${apiUrl}/api/v1/chat/history`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            })
                 .then(res => res.json())
                 .then(data => {
                     if (data.messages && data.messages.length > 0) {
@@ -54,9 +57,10 @@ export default function AIChatWidget() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const token = localStorage.getItem('aegis_token');
             const res = await fetch(`${apiUrl}/api/v1/chat`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                 body: JSON.stringify({
                     role: "user",
                     content: chatInput

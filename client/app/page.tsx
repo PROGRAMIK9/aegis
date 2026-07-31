@@ -1,13 +1,66 @@
 "use client";
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { ShieldAlert, AlertTriangle, ArrowLeft } from 'lucide-react';
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const searchParams = useSearchParams();
+  const isBlocked = searchParams.get('blocked') === 'true';
+  const blockedUrl = searchParams.get('url') || 'Unknown URL';
+  const score = searchParams.get('score') || '100';
+  const tier = searchParams.get('tier') || 'critical';
 
   useEffect(() => {
     setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
   }, []);
+
+  if (isBlocked) {
+    return (
+      <div className="flex flex-col w-full min-h-screen bg-[#0D0000] text-white font-inter items-center justify-center relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+
+        <div className="z-10 flex flex-col items-center max-w-[600px] text-center p-8 bg-red-950/30 border border-red-500/20 rounded-2xl backdrop-blur-xl">
+          <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mb-6 border border-red-500/30">
+            <ShieldAlert size={40} className="text-red-500" />
+          </div>
+
+          <h1 className="text-[32px] font-bold text-red-500 mb-2 font-cormorant tracking-wide">Threat Blocked</h1>
+          <p className="text-red-200/80 mb-8 text-[15px] leading-relaxed">
+            Aegis has intercepted your request to access this website because it was flagged as a severe security risk.
+          </p>
+
+          <div className="w-full bg-black/40 border border-red-500/20 rounded-xl p-4 mb-8 text-left">
+            <div className="text-xs text-red-400/60 uppercase tracking-widest font-semibold mb-1">Target URL</div>
+            <div className="text-white font-mono text-sm break-all mb-4">{blockedUrl}</div>
+
+            <div className="flex gap-4">
+              <div className="flex-1 bg-red-950/40 rounded-lg p-3 border border-red-500/10">
+                <div className="text-xs text-red-400/60 uppercase tracking-widest font-semibold mb-1">Threat Score</div>
+                <div className="text-xl font-bold text-red-500">{score} <span className="text-sm text-red-400/60 font-normal">/ 100</span></div>
+              </div>
+              <div className="flex-1 bg-red-950/40 rounded-lg p-3 border border-red-500/10">
+                <div className="text-xs text-red-400/60 uppercase tracking-widest font-semibold mb-1">Risk Tier</div>
+                <div className="text-xl font-bold text-red-500 uppercase">{tier}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-4 w-full">
+            <button onClick={() => window.close()} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-[0_0_20px_rgba(220,38,38,0.3)]">
+              Close Tab
+            </button>
+            <Link href="/dashboard" className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+              <ArrowLeft size={16} /> Go to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col w-full min-h-screen max-w-[1920px] mx-auto relative z-10 px-8 py-10 fade-in">
 

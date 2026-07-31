@@ -185,7 +185,29 @@ def chat_with_llm(messages: list) -> dict:
             res = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=120)
             res.raise_for_status()
             
-            return res.json()["choices"][0]["message"]
+            msg = res.json()["choices"][0]["message"]
+            
+            # Polyfill for tool calls encoded in content strings
+            import re
+            if msg.get("content") and "<function=" in msg["content"]:
+                matches = re.finditer(r'<function=(.*?)>(.*?)</function>', msg["content"], re.DOTALL)
+                if not msg.get("tool_calls"):
+                    msg["tool_calls"] = []
+                for idx, match in enumerate(matches):
+                    func_name = match.group(1)
+                    args = match.group(2)
+                    msg["tool_calls"].append({
+                        "id": f"call_{idx}",
+                        "type": "function",
+                        "function": {
+                            "name": func_name,
+                            "arguments": args
+                        }
+                    })
+                # Strip it from content so the raw text isn't leaked
+                msg["content"] = re.sub(r'<function=.*?>.*?</function>', '', msg["content"], flags=re.DOTALL).strip()
+                
+            return msg
         except Exception as e:
             return {"role": "assistant", "content": f"Groq API error: {str(e)}"}
     else:
